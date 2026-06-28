@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="UIService/UIService.Client/UIService.Client.csproj" />
+  <Project Path="UIService/UIService/UIService.csproj" />
+</Solution>
