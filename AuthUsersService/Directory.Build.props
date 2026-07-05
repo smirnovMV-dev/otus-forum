@@ -5,6 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>14.0</LangVersion>
     <ApplicationRepo>AuthUsersService</ApplicationRepo>
+	<Nullable>disable</Nullable>
   </PropertyGroup>
 
 </Project>
