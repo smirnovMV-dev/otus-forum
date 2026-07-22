@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRepositories(builder.Configuration);
+builder.Services.AddRepositories();
 
 var app = builder.Build();
 

@@ -1,6 +1,5 @@
-namespace AuthUsersService.Domain.Aggregates.UserRoleAggregate
+namespace AuthUsersService.Domain.Aggregates.UserRoleAggregate;
+
+internal sealed record UserRole
 {
-    internal sealed record UserRole
-    {
-    }
 }

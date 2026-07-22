@@ -9,8 +9,7 @@ namespace AuthUsersService.Infrastructure.Extensions;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddRepositories(
-        this IServiceCollection services,
-        IConfiguration configuration)
+        this IServiceCollection services)
     {
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
