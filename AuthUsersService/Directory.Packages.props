@@ -1,11 +1,16 @@
 <Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
-	<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
-	<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
-  </ItemGroup>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageVersion Include="FluentValidation" Version="12.1.1" />
+        <PackageVersion Include="MediatR" Version="14.2.0" />
+        <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
+        <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
+        <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
+        <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+        <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+    </ItemGroup>
 </Project>

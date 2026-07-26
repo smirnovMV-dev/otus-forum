@@ -1,2 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+  	<ProjectReference Include="..\AuthUsersService.Domain\AuthUsersService.Domain.csproj" />
+  	<ProjectReference Include="..\AuthUsersService.Infrastructure\AuthUsersService.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
 </Project>
