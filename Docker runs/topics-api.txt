@@ -1,0 +1,1 @@
+docker run --name topics-postgres -e POSTGRES_DB=topics-api -e POSTGRES_PASSWORD=mysecretpassword -p 5433:5432 -d postgres:17.9
