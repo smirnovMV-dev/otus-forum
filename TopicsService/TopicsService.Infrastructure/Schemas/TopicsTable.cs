@@ -6,7 +6,7 @@ internal static class TopicsTable
     public const string TableName = "topics";
 
     public const string IdName = "id";
-    public const string CaptionName = "caption";
+    public const string TitleName = "title";
     public const string AuthorIdName = "author_id";
     public const string CreatedAtName = "created_at";
 }

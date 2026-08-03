@@ -1,8 +1,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 using TopicsService.API.Models.Topics.CreateTopic;
+using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.Application.Topics.CreateTopic;
+using TopicsService.Application.Topics.GetLatestTopics;
 
 namespace TopicsService.API.Controllers;
 
@@ -22,10 +25,30 @@ public class TopicController : ControllerBase
         [FromBody] CreateTopicRequest request)
     {
         var command = new CreateTopicCommand(
-            request.Caption,
+            request.Title,
             request.AuthorId);
 
         var result = await _mediator.Send(command);
         return new CreateTopicResponse();
+    }
+
+    [HttpPost(nameof(GetLatest))]
+    public async Task<GetLatestTopicsResponse> GetLatest(
+        [FromBody] GetLatestTopicsRequest request)
+    {
+        var command = new GetLatestTopicsCommand();
+
+        var results = await _mediator.Send(command);
+
+        return new GetLatestTopicsResponse
+        {
+            LatestTopics = [.. results.Select(r => new LatestTopicsResponse
+            {
+                Title = r.Title,
+                AuthorNikname = r.AuthorNikname,
+                CreatedAt = r.CreatedAt
+            }
+            )],
+        };
     }
 }

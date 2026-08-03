@@ -4,7 +4,7 @@ public sealed record Topic
 {
     public long Id { get; private set; }
 
-    public string Caption { get; }
+    public string Title { get; }
 
     public long AuthorId { get; }
 
@@ -13,20 +13,20 @@ public sealed record Topic
     public long SetId(long id) => Id = id;
 
     public static Topic Create(
-        string caption,
+        string title,
         long authorId,
         DateTimeOffset createdAt)
-    => new(caption,
+    => new(title,
         authorId,
         createdAt);
 
 
     private Topic(
-        string caption,
+        string title,
         long authorId,
         DateTimeOffset createdAt) 
     {
-        Caption = caption;
+        Title = title;
         AuthorId = authorId;
         CreatedAt = createdAt;
     }
