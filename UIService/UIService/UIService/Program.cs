@@ -1,5 +1,6 @@
 using UIService.Client.Pages;
 using UIService.Components;
+using OtusForum.UI.Clients.Topics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+// Регистрируем автосгенерированный клиент
+builder.Services.AddHttpClient<ITopicsClient, TopicsClient>(client =>
+{
+    // Указываем базовый адрес микросервиса, с которого снимали схему
+    client.BaseAddress = new Uri("https://localhost:7253");
+});
+
 
 var app = builder.Build();
 

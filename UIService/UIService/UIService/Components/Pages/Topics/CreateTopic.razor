@@ -1,0 +1,95 @@
+@page "/topics/new"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using OtusForum.UI.Clients.Topics
+@inject ITopicsClient TopicsService
+@inject NavigationManager Navigation
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="mb-3">
+        <a href="/topics" class="btn btn-link p-0 text-decoration-none">← Вернуться к списку тем</a>
+    </div>
+
+    <h2 class="mb-4">🆕 Создание новой темы</h2>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm" role="alert">
+            ❌ @_errorMessage
+        </div>
+    }
+
+    @* Форма ввода с нативной валидацией .NET 10 *@
+    <EditForm Model="@_formModel" OnValidSubmit="HandleValidSubmit" FormName="CreateTopicForm">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="title" class="form-label fw-bold">Заголовок темы</label>
+            <InputText id="title" class="form-control form-control-lg" @bind-Value="_formModel.Title" placeholder="Введите краткое, но понятное название" />
+            <ValidationMessage For="@(() => _formModel.Title)" class="text-danger small mt-1" />
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="button" class="btn btn-light" @onclick="Cancel">Отмена</button>
+            <button type="submit" class="btn btn-primary px-4" disabled="@_isSubmitting">
+                @if (_isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Публикация...</span>
+                }
+                else
+                {
+                    <span>Опубликовать тему</span>
+                }
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private TopicFormModel _formModel = new();
+    private bool _isSubmitting = false;
+    private string? _errorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        _isSubmitting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new CreateTopicRequest
+            {
+                Caption = _formModel.Title,
+                AuthorId = 0
+            };
+
+            // Вызываем сгенерированный метод для отправки POST-запроса на бэкенд
+            await TopicsService.CreateAsync(request);
+
+            // Редирект на список тем после успешного сохранения
+            Navigation.NavigateTo("/topics");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Не удалось создать тему: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/topics");
+    }
+
+    // Внутренняя модель для UI-валидации полей ввода
+    public class TopicFormModel
+    {
+        [Required(ErrorMessage = "Заголовок темы обязателен для заполнения")]
+        [StringLength(100, MinimumLength = 5, ErrorMessage = "Заголовок должен содержать от 5 до 100 символов")]
+        public string Title { get; set; } = string.Empty;
+    }
+}

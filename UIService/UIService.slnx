@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="UIService.Clients/UIService.Clients.csproj" Id="4871bbc3-b56c-442f-9af9-0cef600dcf45" />
   <Project Path="UIService/UIService.Client/UIService.Client.csproj" />
   <Project Path="UIService/UIService/UIService.csproj" />
 </Solution>
