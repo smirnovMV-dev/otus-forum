@@ -3,10 +3,6 @@
 	    <IncludeHttpRuleProtos>true</IncludeHttpRuleProtos>
 	</PropertyGroup>
 	
-	<ItemGroup>
-		<Folder Include="Protos\" />
-	</ItemGroup>
-	
     <ItemGroup>
         <PackageReference Include="Google.Protobuf" />
         <PackageReference Include="Grpc.Net.Client" />
@@ -18,6 +14,7 @@
 	</ItemGroup>
 
     <ItemGroup>
+		<Folder Include="Protos\" />
         <Protobuf Include="Protos\users.proto" GrpcServices="Server" />
     </ItemGroup>
 </Project>
