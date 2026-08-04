@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option csharp_namespace = "OtusForum.AuthUsersService.Grpc";
+
+import "google/api/annotations.proto";
+
+
+package users;
+
+service UsersGrpcApi {
+	rpc GetNicknames (GetNicknamesRequest) returns (GetNicknamesResponse) {
+		option (google.api.http) = {
+     		post: "/api/v1/users/getnicknames"
+     		body: "*"
+		};
+	}
+}
+
+message GetNicknamesRequest {
+	repeated int64 user_ids = 1;
+}
+
+message GetNicknamesResponse {
+	repeated UserNickname users_nicknames = 1;
+
+	message UserNickname {
+		int64 user_id = 1;
+		string nickname = 2;
+	}
+}

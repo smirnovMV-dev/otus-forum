@@ -3,6 +3,7 @@ using AuthUsersService.Application.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using AuthUsersService.Application.Services.External.UsersGrpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 
+builder.Services.AddGrpc().AddJsonTranscoding();
 
 builder.Services.AddControllers();
 
@@ -28,6 +30,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapGrpcService<UsersGrpcService>();
 app.MapControllers();
 
 app.Run();
