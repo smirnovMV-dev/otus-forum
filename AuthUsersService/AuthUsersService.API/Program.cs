@@ -11,7 +11,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 
+builder.Services.AddGrpc();
 builder.Services.AddGrpc().AddJsonTranscoding();
+builder.Services.AddGrpcReflection();
 
 builder.Services.AddControllers();
 
@@ -19,6 +21,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    app.MapGrpcReflectionService();
+
     app.MapOpenApi();
 
     app.UseSwaggerUI(options =>
