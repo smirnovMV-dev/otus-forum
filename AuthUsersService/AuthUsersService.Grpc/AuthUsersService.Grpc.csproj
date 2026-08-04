@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+	    <IncludeHttpRuleProtos>true</IncludeHttpRuleProtos>
+	</PropertyGroup>
+	
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf" />
+        <PackageReference Include="Grpc.Net.Client" />
+		<PackageReference Include="Google.Api.CommonProtos" />
+        <PackageReference Include="Grpc.Tools">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>		
+	</ItemGroup>
+
+    <ItemGroup>
+		<Folder Include="Protos\" />
+        <Protobuf Include="Protos\users.proto" GrpcServices="Server" />
+    </ItemGroup>
+</Project>

@@ -2,8 +2,8 @@
 	<ItemGroup>
 	  <PackageReference Include="MediatR" />
 	  <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-	  <PackageReference Include="Microsoft.OpenApi" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+		<PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\AuthUsersService.Application\AuthUsersService.Application.csproj" />

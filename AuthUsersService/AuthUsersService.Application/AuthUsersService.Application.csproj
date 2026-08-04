@@ -2,9 +2,11 @@
   <ItemGroup>
   	<ProjectReference Include="..\AuthUsersService.Domain\AuthUsersService.Domain.csproj" />
   	<ProjectReference Include="..\AuthUsersService.Infrastructure\AuthUsersService.Infrastructure.csproj" />
+	<ProjectReference Include="..\AuthUsersService.Grpc\AuthUsersService.Grpc.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="MediatR" />
+	<PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
   </ItemGroup>
 </Project>
