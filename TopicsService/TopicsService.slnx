@@ -7,5 +7,6 @@
   <Project Path="TopicsService.API/TopicsService.API.csproj" />
   <Project Path="TopicsService.Application/TopicsService.Application.csproj" Id="d9868266-317f-4b40-bea7-0d24c69040ac" />
   <Project Path="TopicsService.Domain/TopicsService.Domain.csproj" Id="1ad72384-fedf-4f04-a111-526cb708b30e" />
+  <Project Path="TopicsService.Grpc/TopicsService.Grpc.csproj" Id="cc7493cf-7142-44c9-82a3-f412c4a43ab0" />
   <Project Path="TopicsService.Infrastructure/TopicsService.Infrastructure.csproj" Id="4f08657c-fe24-4fd6-a6e1-1ec7d008b926" />
 </Solution>
