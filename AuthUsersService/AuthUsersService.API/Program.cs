@@ -11,6 +11,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 
+builder.Services.AddGrpc().AddJsonTranscoding();
 
 builder.Services.AddControllers();
 
@@ -28,6 +29,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapInternalGrpcServices();
+
 app.MapControllers();
 
 app.Run();

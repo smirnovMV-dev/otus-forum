@@ -9,5 +9,6 @@
   <Project Path="AuthUsersService.API/AuthUsersService.API.csproj" Id="179f2737-408c-42fb-8768-5e41bc3fab6e" />
   <Project Path="AuthUsersService.Application/AuthUsersService.Application.csproj" Id="08cad8d4-e49d-4b84-9513-5b0f9924d40e" />
   <Project Path="AuthUsersService.Domain/AuthUsersService.Domain.csproj" Id="385b9995-f57d-49ca-aa9d-4a85e7eb42b8" />
+  <Project Path="AuthUsersService.Grpc/AuthUsersService.Grpc.csproj" Id="085e605a-33af-4938-be2a-21652ce77a17" />
   <Project Path="AuthUsersService.Infrastructure/AuthUsersService.Infrastructure.csproj" Id="bfa578ad-be85-4ed2-b4c5-a066e4cb187d" /> 
 </Solution>
