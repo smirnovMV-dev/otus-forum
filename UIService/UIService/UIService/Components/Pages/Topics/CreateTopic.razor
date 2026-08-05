@@ -28,7 +28,11 @@
             <InputText id="title" class="form-control form-control-lg" @bind-Value="_formModel.Title" placeholder="Введите краткое, но понятное название" />
             <ValidationMessage For="@(() => _formModel.Title)" class="text-danger small mt-1" />
         </div>
-
+        <div class="mb-3">
+            <label for="author-id" class="form-label fw-bold">Id автора темы</label>
+            <InputNumber id="author-id" class="form-control form-control-lg" @bind-Value="_formModel.AuthorId" placeholder="Введите Id автора (больше нуля)" />
+            <ValidationMessage For="@(() => _formModel.AuthorId)" class="text-danger small mt-1" />
+        </div>
         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
             <button type="button" class="btn btn-light" @onclick="Cancel">Отмена</button>
             <button type="submit" class="btn btn-primary px-4" disabled="@_isSubmitting">
@@ -60,8 +64,8 @@
         {
             var request = new CreateTopicRequest
             {
-                Caption = _formModel.Title,
-                AuthorId = 0
+                Title = _formModel.Title,
+                AuthorId = _formModel.AuthorId
             };
 
             // Вызываем сгенерированный метод для отправки POST-запроса на бэкенд
@@ -91,5 +95,9 @@
         [Required(ErrorMessage = "Заголовок темы обязателен для заполнения")]
         [StringLength(100, MinimumLength = 5, ErrorMessage = "Заголовок должен содержать от 5 до 100 символов")]
         public string Title { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Id автора темы должен быть заполнен")]
+        [Range(1, long.MaxValue, ErrorMessage = "Значение должно быть больше нуля")]
+        public long AuthorId { get; set; }
     }
 }

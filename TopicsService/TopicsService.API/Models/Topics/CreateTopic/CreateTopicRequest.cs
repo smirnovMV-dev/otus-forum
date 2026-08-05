@@ -2,7 +2,7 @@ namespace TopicsService.API.Models.Topics.CreateTopic;
 
 public sealed class CreateTopicRequest
 {
-    public string Caption { get; set; } = string.Empty;
+    public required string Title { get; set; }
 
-    public long AuthorId { get; set; }
+    public required long AuthorId { get; set; }
 }

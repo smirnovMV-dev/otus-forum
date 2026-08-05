@@ -6,7 +6,7 @@ public sealed class CreateTopicCommandValidator : AbstractValidator<CreateTopicC
 {
     public CreateTopicCommandValidator()
     {
-        RuleFor(command => command.Caption)
+        RuleFor(command => command.Title)
             .NotEmpty()
             .WithMessage("Заголовок топика не может быть пустым.");
         RuleFor(command => command.AuthorId)

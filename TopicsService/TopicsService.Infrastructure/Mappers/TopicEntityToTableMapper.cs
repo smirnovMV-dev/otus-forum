@@ -20,8 +20,8 @@ internal static class TopicEntityToTableMapper
                 .HasColumnName(TopicsTable.IdName)
                 .UseIdentityAlwaysColumn();
 
-            topic.Property(t => t.Caption)
-                .HasColumnName(TopicsTable.CaptionName)
+            topic.Property(t => t.Title)
+                .HasColumnName(TopicsTable.TitleName)
                 .HasColumnType("text")
                 .IsRequired();
 

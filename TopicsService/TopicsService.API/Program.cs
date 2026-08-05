@@ -2,8 +2,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Reflection;
 using TopicsService.Application.Extensions;
 using TopicsService.Infrastructure.Extensions;
 
@@ -18,6 +16,8 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 builder.Services.AddControllers();
 
+builder.Services.AddGrpcClients();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -31,6 +31,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.MapInternalGrpcServices();
 app.UseHttpsRedirection();
 app.MapControllers();
 

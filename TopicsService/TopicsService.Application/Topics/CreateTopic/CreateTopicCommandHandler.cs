@@ -8,7 +8,7 @@ using TopicsService.Infrastructure.Repositories.Topics;
 namespace TopicsService.Application.Topics.CreateTopic;
 
 public sealed record CreateTopicCommand(
-    string Caption,
+    string Title,
     long AuthorId) : IRequest<int>;
 
 internal class CreateTopicCommandHandler : IRequestHandler<CreateTopicCommand, int>
@@ -26,7 +26,7 @@ internal class CreateTopicCommandHandler : IRequestHandler<CreateTopicCommand, i
         CancellationToken cancellationToken)
     {
         var topic = Topic.Create(
-            command.Caption,
+            command.Title,
             command.AuthorId,
             DateTimeOffset.UtcNow);
 
