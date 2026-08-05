@@ -44,6 +44,7 @@ public class TopicController : ControllerBase
         {
             LatestTopics = [.. results.Select(r => new LatestTopicsResponse
             {
+                Id = r.Id,
                 Title = r.Title,
                 AuthorNikname = r.AuthorNikname,
                 CreatedAt = r.CreatedAt
