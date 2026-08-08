@@ -1,0 +1,1 @@
+nswag openapi2csclient /input:https://localhost:7195/openapi/v1.json /output:UsersClient.g.cs /namespace:OtusForum.UI.Clients.Users /className:UsersClient /generateClientInterfaces:true /jsonLibrary:SystemTextJson

@@ -1,0 +1,121 @@
+@page "/users/assign-role"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using OtusForum.UI.Clients.Users
+@inject IUsersClient UsersClient
+@inject NavigationManager Navigation
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="mb-3">
+        <a href="/users" class="btn btn-link p-0 text-decoration-none">← Вернуться к пользователям</a>
+    </div>
+
+    <h2 class="mb-4">Назначение роли пользователю</h2>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm" role="alert">
+            @_errorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_successMessage))
+    {
+        <div class="alert alert-success shadow-sm" role="alert">
+            @_successMessage
+        </div>
+    }
+
+    <EditForm Model="@_formModel" OnValidSubmit="HandleValidSubmit" FormName="AssignRoleForm">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="user-id" class="form-label fw-bold">Id пользователя</label>
+            <InputNumber id="user-id" class="form-control form-control-lg" @bind-Value="_formModel.UserId" placeholder="Введите Id пользователя" />
+            <ValidationMessage For="@(() => _formModel.UserId)" class="text-danger small mt-1" />
+        </div>
+
+        <div class="mb-3">
+            <label for="role-id" class="form-label fw-bold">Id роли</label>
+            <InputNumber id="role-id" class="form-control form-control-lg" @bind-Value="_formModel.RoleId" placeholder="Введите Id роли" />
+            <ValidationMessage For="@(() => _formModel.RoleId)" class="text-danger small mt-1" />
+        </div>
+
+        <div class="mb-3">
+            <label for="expires-at" class="form-label fw-bold">Срок действия (необязательно)</label>
+            <InputDate id="expires-at" class="form-control form-control-lg" @bind-Value="_formModel.ExpiresAt" />
+            <div class="form-text">Оставьте пустым, если роль не должна истекать.</div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="button" class="btn btn-light" @onclick="Cancel">Отмена</button>
+            <button type="submit" class="btn btn-primary px-4" disabled="@_isSubmitting">
+                @if (_isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Назначение...</span>
+                }
+                else
+                {
+                    <span>Назначить роль</span>
+                }
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private AssignRoleFormModel _formModel = new();
+    private bool _isSubmitting;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        _isSubmitting = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var request = new AssignUserRoleRequest
+            {
+                UserId = _formModel.UserId,
+                RoleId = _formModel.RoleId,
+                ExpiresAt = _formModel.ExpiresAt.HasValue
+                    ? new DateTimeOffset(DateTime.SpecifyKind(_formModel.ExpiresAt.Value, DateTimeKind.Local))
+                    : null
+            };
+
+            await UsersClient.AssignRoleAsync(request);
+            _successMessage = "Роль успешно назначена пользователю.";
+            _formModel = new AssignRoleFormModel();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Не удалось назначить роль: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/users");
+    }
+
+    public class AssignRoleFormModel
+    {
+        [Required(ErrorMessage = "Id пользователя обязателен для заполнения")]
+        [Range(1, long.MaxValue, ErrorMessage = "Id пользователя должен быть больше нуля")]
+        public long UserId { get; set; }
+
+        [Required(ErrorMessage = "Id роли обязателен для заполнения")]
+        [Range(1, long.MaxValue, ErrorMessage = "Id роли должен быть больше нуля")]
+        public long RoleId { get; set; }
+
+        public DateTime? ExpiresAt { get; set; }
+    }
+}
