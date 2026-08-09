@@ -1,0 +1,93 @@
+@page "/roles/create"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using OtusForum.UI.Clients.Users
+@inject IUsersClient UsersClient
+@inject NavigationManager Navigation
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="mb-3">
+        <a href="/topics" class="btn btn-link p-0 text-decoration-none">← Вернуться</a>
+    </div>
+
+    <h2 class="mb-4">🆕 Создание новой роли</h2>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm" role="alert">
+            ❌ @_errorMessage
+        </div>
+    }
+
+    @* Форма ввода с нативной валидацией .NET 10 *@
+    <EditForm Model="@_formModel" OnValidSubmit="HandleValidSubmit" FormName="RoleCrateForm">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="roleName" class="form-label fw-bold">Наименование роли</label>
+            <InputText id="roleName" class="form-control form-control-lg" @bind-Value="_formModel.RoleName" placeholder="Введите наименование роли" />
+            <ValidationMessage For="@(() => _formModel.RoleName)" class="text-danger small mt-1" />
+        </div>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="button" class="btn btn-light" @onclick="Cancel">Отмена</button>
+            <button type="submit" class="btn btn-primary px-4" disabled="@_isSubmitting">
+                @if (_isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Создание...</span>
+                }
+                else
+                {
+                    <span>Создать роль</span>
+                }
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private RoleCreateFormModel _formModel = new();
+    private bool _isSubmitting = false;
+    private string? _errorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        _isSubmitting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new CreateRoleRequest
+            {
+                RoleName = _formModel.RoleName,
+            };
+
+            // Вызываем сгенерированный метод для отправки POST-запроса на бэкенд
+            await UsersClient.CreateAsync(request);
+
+            // Редирект на список тем после успешного сохранения
+            Navigation.NavigateTo("/roles");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Не удалось создать роль: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/roles");
+    }
+
+    // Внутренняя модель для UI-валидации полей ввода
+    public class RoleCreateFormModel
+    {
+        [Required(ErrorMessage = "Наименование роли обязательно для заполнения")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Наименование роли должно содержать от 3 до 100 символов")]
+        public string RoleName { get; set; } = string.Empty;
+    }
+}

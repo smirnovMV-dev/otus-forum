@@ -1,7 +1,216 @@
 ﻿@page "/"
+@rendermode InteractiveAuto
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Главная — Otus Forum</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+<!-- ===== Hero-секция ===== -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="hero-title">Добро пожаловать в <span class="highlight">Otus Forum</span></h1>
+        <p class="hero-subtitle">Сообщество для обсуждения проектов, вопросов обучения и обмена опытом</p>
+        <div class="hero-actions">
+            <a href="/topics" class="btn btn-primary btn-lg">
+                <i class="bi bi-list-nested me-2"></i>Темы форума
+            </a>
+            <a href="/users" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-people me-2"></i>Пользователи
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Статистика ===== -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="stat-card card h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-chat-dots stat-icon text-primary"></i>
+                        <div class="stat-value">@topicCount</div>
+                        <div class="stat-label">Тем создано</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card card h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-people stat-icon text-success"></i>
+                        <div class="stat-value">@userCount</div>
+                        <div class="stat-label">Пользователей</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card card h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-shield-check stat-icon text-warning"></i>
+                        <div class="stat-value">@roleCount</div>
+                        <div class="stat-label">Ролей</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Последние темы ===== -->
+<section class="latest-section py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-4">
+            <i class="bi bi-fire text-danger me-2"></i>Последние темы
+        </h2>
+
+        @if (loading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-3 text-muted">Загружаем темы...</p>
+            </div>
+        }
+        else if (error != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Не удалось загрузить темы: @error
+            </div>
+        }
+        else if (latestTopics.Any())
+        {
+            <div class="row g-3">
+                @foreach (var topic in latestTopics)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="topic-card card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="/topics/@topic.Id" class="text-decoration-none">
+                                        @topic.Title
+                                    </a>
+                                </h5>
+                                <div class="topic-meta">
+                                    <i class="bi bi-person me-1"></i>@topic.AuthorNikname
+                                    <span class="mx-2">·</span>
+                                    <i class="bi bi-clock me-1"></i>@FormatDate(topic.CreatedAt)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="text-center mt-4">
+                <a href="/topics" class="btn btn-outline-primary">
+                    Смотреть все темы <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <p class="mt-3 text-muted">Тем пока нет. Будьте первым — создайте первую тему!</p>
+                <a href="/topics" class="btn btn-primary mt-2">Создать тему</a>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- ===== Навигация по разделам ===== -->
+<section class="nav-section py-5 bg-light">
+    <div class="container">
+        <h2 class="section-title text-center mb-4">Разделы форума</h2>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <a href="/topics" class="nav-card card text-decoration-none">
+                    <div class="card-body text-center">
+                        <i class="bi bi-list-nested nav-card-icon text-primary"></i>
+                        <h5 class="mt-3 mb-1">Темы</h5>
+                        <p class="text-muted small mb-0">Обсуждения и вопросы</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="/users" class="nav-card card text-decoration-none">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people nav-card-icon text-success"></i>
+                        <h5 class="mt-3 mb-1">Пользователи</h5>
+                        <p class="text-muted small mb-0">Участники сообщества</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="/roles" class="nav-card card text-decoration-none">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-check nav-card-icon text-warning"></i>
+                        <h5 class="mt-3 mb-1">Роли</h5>
+                        <p class="text-muted small mb-0">Управление правами</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <a href="/new-topic" class="nav-card card text-decoration-none">
+                    <div class="card-body text-center">
+                        <i class="bi bi-plus-circle nav-card-icon text-danger"></i>
+                        <h5 class="mt-3 mb-1">Новая тема</h5>
+                        <p class="text-muted small mb-0">Создать обсуждение</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private int topicCount = 0;
+    private int userCount = 0;
+    private int roleCount = 0;
+    private List<LatestTopicsResponse> latestTopics = new();
+    private bool loading = true;
+    private string? error;
+
+    [Inject] private ITopicsClient TopicsClient { get; set; } = default!;
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            // Загружаем последние темы
+            var topicsResponse = await TopicsClient.GetLatestAsync(new GetLatestTopicsRequest());
+            latestTopics = topicsResponse.LatestTopics.ToList();
+            topicCount = latestTopics.Count;
+
+            // Placeholder — метод получения статистики пользователей/ролей пока не реализован в API
+            userCount = 0;
+            roleCount = 0;
+
+            loading = false;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            loading = false;
+        }
+    }
+
+    private static string FormatDate(DateTimeOffset date)
+    {
+        var diff = DateTimeOffset.Now - date;
+        var totalMinutes = (int)diff.TotalMinutes;
+        var totalHours = (int)diff.TotalHours;
+        var totalDays = (int)diff.TotalDays;
+
+        if (totalMinutes < 1) return "только что";
+        if (totalMinutes < 60) return $"{totalMinutes} мин. назад";
+        if (totalHours < 24) return $"{totalHours} ч. назад";
+        if (totalDays < 7) return $"{totalDays} дн. назад";
+        return date.ToString("dd.MM.yyyy");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+}

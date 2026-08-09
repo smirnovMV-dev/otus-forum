@@ -293,7 +293,8 @@ paket-files/
 *.sln.iml
 
 # GigaIDE
-gigaide.properties
+.gigaide/
+*.gs
 
 # CodeRush personal settings
 .cr/personal
