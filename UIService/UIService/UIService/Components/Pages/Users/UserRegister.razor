@@ -1,0 +1,113 @@
+@page "/users/register"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using OtusForum.UI.Clients.Users
+@inject IUsersClient UsersClient
+@inject NavigationManager Navigation
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="mb-3">
+        <a href="/topics" class="btn btn-link p-0 text-decoration-none">← Вернуться</a>
+    </div>
+
+    <h2 class="mb-4">🆕 Регистрация нового пользователя</h2>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger shadow-sm" role="alert">
+            ❌ @_errorMessage
+        </div>
+    }
+
+    @* Форма ввода с нативной валидацией .NET 10 *@
+    <EditForm Model="@_formModel" OnValidSubmit="HandleValidSubmit" FormName="UserRegisterForm">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="nickname" class="form-label fw-bold">Ник</label>
+            <InputText id="nickname" class="form-control form-control-lg" @bind-Value="_formModel.Nickname" placeholder="Придумайте ник" />
+            <ValidationMessage For="@(() => _formModel.Nickname)" class="text-danger small mt-1" />
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label fw-bold">Емэйл</label>
+            <InputText id="email" class="form-control form-control-lg" @bind-Value="_formModel.Email" placeholder="Введите емэйл" />
+            <ValidationMessage For="@(() => _formModel.Email)" class="text-danger small mt-1" />
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label fw-bold">Пароль</label>
+            <InputText id="password" class="form-control form-control-lg" @bind-Value="_formModel.Password" placeholder="Придумайте пароль" />
+            <ValidationMessage For="@(() => _formModel.Password)" class="text-danger small mt-1" />
+        </div>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="button" class="btn btn-light" @onclick="Cancel">Отмена</button>
+            <button type="submit" class="btn btn-primary px-4" disabled="@_isSubmitting">
+                @if (_isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Регистрация...</span>
+                }
+                else
+                {
+                    <span>Зарегистрировать пользователя</span>
+                }
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private UserRegisterFormModel _formModel = new();
+    private bool _isSubmitting = false;
+    private string? _errorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        _isSubmitting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new RegisterUserRequest
+            {
+                Nickname = _formModel.Nickname,
+                Email = _formModel.Email,
+                Password = _formModel.Password,
+            };
+
+            // Вызываем сгенерированный метод для отправки POST-запроса на бэкенд
+            await UsersClient.RegisterAsync(request);
+
+            // Редирект на список тем после успешного сохранения
+            Navigation.NavigateTo("/users");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Не удалось зарегистрировать пользователя: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/users");
+    }
+
+    // Внутренняя модель для UI-валидации полей ввода
+    public class UserRegisterFormModel
+    {
+        [Required(ErrorMessage = "Ник обязателен для заполнения")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Ник должен содержать от 3 до 100 символов")]
+        public string Nickname { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Емэйл должен быть заполнен")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Емэйл должен содержать от 3 до 100 символов")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Пароль должен быть заполнен")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Пароль должен содержать от 3 до 100 символов")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
