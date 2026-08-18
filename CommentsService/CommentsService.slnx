@@ -1,3 +1,11 @@
 <Solution>
-  <Project Path="CommentsService/CommentsService.csproj" />
+  <Folder Name="/Common/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="CommentsService.API/CommentsService.API.csproj" />
+  <Project Path="CommentsService.Application/CommentsService.Application.csproj" Id="d29de2d7-51ef-4bb0-8db1-70d179c0e362" />
+  <Project Path="CommentsService.Domain/CommentsService.Domain.csproj" Id="5ac2a60a-c2c1-4690-848b-96695cf32e82" />
+  <Project Path="CommentsService.Infrastructure/CommentsService.Infrastructure.csproj" Id="9e833391-1e3c-4dbb-9de2-5bd21554477d" />
 </Solution>
