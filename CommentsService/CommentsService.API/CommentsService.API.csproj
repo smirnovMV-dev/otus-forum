@@ -1,2 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<ItemGroup>
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+		<PackageReference Include="Microsoft.OpenApi" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CommentsService.Application\CommentsService.Application.csproj" />
+		<ProjectReference Include="..\CommentsService.Infrastructure\CommentsService.Infrastructure.csproj" />
+	</ItemGroup>
+
 </Project>
