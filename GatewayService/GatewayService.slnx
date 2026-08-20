@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Common/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="GatewayService.API/GatewayService.API.csproj" />
+</Solution>

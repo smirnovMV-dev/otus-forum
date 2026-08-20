@@ -13,12 +13,12 @@ builder.Services.AddRazorComponents()
 // Регистрируем автосгенерированный клиент
 builder.Services.AddHttpClient<ITopicsClient, TopicsClient>(client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7253");
+    client.BaseAddress = new Uri("https://localhost:7000/api/topics");
 });
 
 builder.Services.AddHttpClient<IUsersClient, UsersClient>(client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7195");
+    client.BaseAddress = new Uri("https://localhost:7000/api/auth");
 });
 
 
