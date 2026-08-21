@@ -1,0 +1,17 @@
+services:
+  gateway-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Cors__AllowedOrigins=https://localhost:7126,http://localhost:3000
+    networks:
+      - otus-network
+
+networks:
+  otus-network:
+    external: true

@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:17.9
+    container_name: topics-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: topics-api
+    ports:
+      - "5433:5432"
+    volumes:
+      - topics-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - otus-network
+
+  topics-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: topics-service
+    ports:
+      - "5294:5294"
+    environment:
+      - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=topics-api;Username=postgres;Password=mysecretpassword
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - otus-network
+
+volumes:
+  topics-postgres-data:
+
+networks:
+  otus-network:
+    external: true

@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:17.9
+    container_name: auth-users-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: auth-users
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-users-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - otus-network
+
+  auth-users-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-users-service
+    ports:
+      - "5225:5225"
+      - "5226:5226"
+    environment:
+      - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=auth-users;Username=postgres;Password=mysecretpassword
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - otus-network
+
+volumes:
+  auth-users-postgres-data:
+
+networks:
+  otus-network:
+    external: true

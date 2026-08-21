@@ -1,7 +1,9 @@
+using OtusForum.UI.Clients.Comments;
 using OtusForum.UI.Clients.Topics;
 using OtusForum.UI.Clients.Users;
-using UIService.Client.Pages;
+using UIService.Clients;
 using UIService.Components;
+using UIService.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,14 +13,42 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 // Регистрируем автосгенерированный клиент
-builder.Services.AddHttpClient<ITopicsClient, TopicsClient>(client =>
+builder.Services.AddTransient<ErrorLoggingHandler>();
+
+// Named HttpClients for general use.
+builder.Services.AddHttpClient("TopicsClient", client => { client.BaseAddress = new Uri("http://topics-service:5294/"); });
+builder.Services.AddHttpClient("UsersClient", client => { client.BaseAddress = new Uri("http://auth-users-service:5225/"); });
+builder.Services.AddHttpClient("CommentsClient", client => { client.BaseAddress = new Uri("http://comments-service:5044/"); });
+
+// API client registrations using factory delegates (avoid hardcoded BaseUrl from generated clients).
+builder.Services.AddTransient<ITopicsClient>(sp =>
 {
-    client.BaseAddress = new Uri("https://localhost:7000/api/topics");
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var config = sp.GetRequiredService<IConfiguration>();
+    var url = config.GetValue<string>("ApiUrls:Topics") ?? "http://topics-service:5294";
+    var client = factory.CreateClient();
+    client.BaseAddress = new Uri(url);
+    return new TopicsClient(client) { BaseUrl = url.TrimEnd('/') };
 });
 
-builder.Services.AddHttpClient<IUsersClient, UsersClient>(client =>
+builder.Services.AddTransient<IUsersClient>(sp =>
 {
-    client.BaseAddress = new Uri("https://localhost:7000/api/auth");
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var config = sp.GetRequiredService<IConfiguration>();
+    var url = config.GetValue<string>("ApiUrls:Auth") ?? "http://auth-users-service:5225";
+    var client = factory.CreateClient();
+    client.BaseAddress = new Uri(url);
+    return new UsersClient(client) { BaseUrl = url.TrimEnd('/') };
+});
+
+builder.Services.AddTransient<ICommentsClient>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var config = sp.GetRequiredService<IConfiguration>();
+    var url = config.GetValue<string>("ApiUrls:Comments") ?? "http://comments-service:5044";
+    var client = factory.CreateClient();
+    client.BaseAddress = new Uri(url);
+    return new CommentsClient(client) { BaseUrl = url.TrimEnd('/') };
 });
 
 

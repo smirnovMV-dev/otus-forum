@@ -71,7 +71,7 @@ namespace OtusForum.UI.Clients.Users
         public UsersClient(System.Net.Http.HttpClient httpClient)
     #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
-            BaseUrl = "https://localhost:7195/";
+            BaseUrl = "http://localhost:5225/";
             _httpClient = httpClient;
             Initialize();
         }

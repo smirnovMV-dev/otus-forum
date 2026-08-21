@@ -1,0 +1,1 @@
+nswag openapi2csclient /input:http://localhost:5044/openapi/v1.json /output:CommentsClient.g.cs /namespace:OtusForum.UI.Clients.Comments /className:CommentsClient /generateClientInterfaces:true /jsonLibrary:SystemTextJson

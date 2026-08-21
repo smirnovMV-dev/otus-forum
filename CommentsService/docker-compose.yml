@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:17.9
+    container_name: comments-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: comments-api
+    ports:
+      - "5434:5432"
+    volumes:
+      - comments-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - otus-network
+
+  comments-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: comments-service
+    ports:
+      - "5044:5044"
+    environment:
+      - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=comments-api;Username=postgres;Password=mysecretpassword
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - otus-network
+
+volumes:
+  comments-postgres-data:
+
+networks:
+  otus-network:
+    external: true

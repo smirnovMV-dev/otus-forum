@@ -1,8 +1,11 @@
 <Solution>
   <Folder Name="/Common/">
+    <File Path=".dockerignore" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
   </Folder>
   <Project Path="CommentsService.API/CommentsService.API.csproj" />
   <Project Path="CommentsService.Application/CommentsService.Application.csproj" Id="d29de2d7-51ef-4bb0-8db1-70d179c0e362" />

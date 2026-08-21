@@ -17,7 +17,7 @@ public static class GrpcExtensions
     {
         services.AddGrpcClient<UsersGrpcApi.UsersGrpcApiClient> (options =>
         {
-            options.Address = new System.Uri("https://localhost:7195");
+            options.Address = new System.Uri("http://auth-users-service:5226");
         });
 
         return services;
