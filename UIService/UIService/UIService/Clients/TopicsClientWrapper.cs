@@ -14,11 +14,11 @@ public class TopicsClientWrapper : ITopicsClient
         _inner = new TopicsClient(httpClient) { BaseUrl = apiUrl.TrimEnd('/') };
     }
 
-    public Task<CreateTopicResponse> CreateAsync(CreateTopicRequest body)
-        => _inner.CreateAsync(body);
+    public Task<CreateTopicResponse> CreateAsync(long? userId, CreateTopicRequest body)
+        => _inner.CreateAsync(userId, body);
 
-    public Task<CreateTopicResponse> CreateAsync(CreateTopicRequest body, CancellationToken cancellationToken)
-        => _inner.CreateAsync(body, cancellationToken);
+    public Task<CreateTopicResponse> CreateAsync(long? userId, CreateTopicRequest body, CancellationToken cancellationToken)
+        => _inner.CreateAsync(userId, body, cancellationToken);
 
     public Task<GetLatestTopicsResponse> GetLatestAsync(GetLatestTopicsRequest body)
         => _inner.GetLatestAsync(body);

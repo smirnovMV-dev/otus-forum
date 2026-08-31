@@ -19,12 +19,13 @@ public class CommentController : ControllerBase
 
     [HttpPost(nameof(Create))]
     public async Task<CreateCommentResponse> Create(
-        [FromBody] CreateCommentRequest request)
+        [FromBody] CreateCommentRequest request,
+        [FromHeader(Name = "X-UserId")] long userId)
     {
         var command = new CreateCommentCommand(
             request.TopicId,
             request.ParentCommentId,
-            request.AuthorId,
+            userId,
             request.Content);
 
         await _mediator.Send(command);

@@ -1,3 +1,5 @@
+using System;
+
 namespace TopicsService.Domain.Entities;
 
 public sealed record Topic

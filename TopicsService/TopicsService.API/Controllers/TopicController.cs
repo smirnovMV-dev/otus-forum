@@ -22,11 +22,12 @@ public class TopicController : ControllerBase
 
     [HttpPost(nameof(Create))]
     public async Task<CreateTopicResponse> Create(
-        [FromBody] CreateTopicRequest request)
+        [FromBody] CreateTopicRequest request,
+        [FromHeader(Name = "X-UserId")] long userId)
     {
         var command = new CreateTopicCommand(
             request.Title,
-            request.AuthorId);
+            userId);
 
         var result = await _mediator.Send(command);
         return new CreateTopicResponse();

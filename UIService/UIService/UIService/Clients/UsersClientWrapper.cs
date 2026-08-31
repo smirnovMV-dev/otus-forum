@@ -30,4 +30,10 @@ public class UsersClientWrapper : IUsersClient
 
     public Task<AssignUserRoleResponse> AssignRoleAsync(AssignUserRoleRequest body, CancellationToken cancellationToken)
         => _inner.AssignRoleAsync(body, cancellationToken);
+
+    public Task<LoginResponse> LoginAsync(LoginRequest body)
+        => _inner.LoginAsync(body);
+
+    public Task<LoginResponse> LoginAsync(LoginRequest body, CancellationToken cancellationToken)
+        => _inner.LoginAsync(body, cancellationToken);
 }

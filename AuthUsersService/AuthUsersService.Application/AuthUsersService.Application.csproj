@@ -5,8 +5,10 @@
 	<ProjectReference Include="..\AuthUsersService.Grpc\AuthUsersService.Grpc.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="MediatR" />
 	<PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
 </Project>

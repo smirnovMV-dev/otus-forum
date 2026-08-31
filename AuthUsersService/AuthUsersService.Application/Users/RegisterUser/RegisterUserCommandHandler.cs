@@ -25,10 +25,12 @@ internal class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand,
         RegisterUserCommand command, 
         CancellationToken cancellationToken)
     {
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(command.Password);
+
         var user = User.Create(
             command.Nickname,
             command.Email,
-            command.Password,
+            hashedPassword,
             DateTimeOffset.UtcNow);
 
         return await _userRepository.CreateAsync(

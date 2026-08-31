@@ -15,4 +15,8 @@ public interface IUserRepository
     Task<IReadOnlyCollection<UserNicknameModel>> GetNicknamesAsync(
         IReadOnlyCollection<long> userIds,
         CancellationToken cancellationToken);
+
+    Task<User?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken);
 }

@@ -24,7 +24,7 @@ public sealed record User
     }
 
     public long SetId(long id) => Id = id;
-    
+
     private User(
         string nickname,
         string email,

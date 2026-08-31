@@ -29,12 +29,12 @@ namespace OtusForum.UI.Clients.Topics
     {
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(CreateTopicRequest body);
+        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(CreateTopicRequest body, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -97,15 +97,15 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(CreateTopicRequest body)
+        public virtual System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body)
         {
-            return CreateAsync(body, System.Threading.CancellationToken.None);
+            return CreateAsync(x_UserId, body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(CreateTopicRequest body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body, System.Threading.CancellationToken cancellationToken)
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -116,6 +116,9 @@ namespace OtusForum.UI.Clients.Topics
             {
                 using (var request_ = new System.Net.Http.HttpRequestMessage())
                 {
+
+                    if (x_UserId != null)
+                        request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
                     var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
                     var content_ = new System.Net.Http.ByteArrayContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
@@ -401,11 +404,6 @@ namespace OtusForum.UI.Clients.Topics
         [System.Text.Json.Serialization.JsonPropertyName("title")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Title { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("authorId")]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
-        public long AuthorId { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

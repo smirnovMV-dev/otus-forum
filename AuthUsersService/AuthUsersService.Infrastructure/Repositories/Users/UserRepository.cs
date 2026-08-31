@@ -66,4 +66,16 @@ internal sealed class UserRepository : IUserRepository
             return [];
         }
     }
+
+    public async Task<User?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return null;
+
+        return await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+    }
 }

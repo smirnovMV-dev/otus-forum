@@ -13,9 +13,9 @@ public class CommentsClientWrapper : ICommentsClient
         _inner = new CommentsClient(httpClient) { BaseUrl = apiUrl.TrimEnd('/') };
     }
 
-    public Task<CreateCommentResponse> CreateAsync(CreateCommentRequest body)
-        => _inner.CreateAsync(body);
+    public Task<CreateCommentResponse> CreateAsync(long? userId, CreateCommentRequest body)
+        => _inner.CreateAsync(userId, body);
 
-    public Task<CreateCommentResponse> CreateAsync(CreateCommentRequest body, CancellationToken cancellationToken)
-        => _inner.CreateAsync(body, cancellationToken);
+    public Task<CreateCommentResponse> CreateAsync(long? userId, CreateCommentRequest body, CancellationToken cancellationToken)
+        => _inner.CreateAsync(userId, body, cancellationToken);
 }
