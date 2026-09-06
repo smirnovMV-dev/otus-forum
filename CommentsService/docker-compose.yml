@@ -25,9 +25,14 @@ services:
     container_name: comments-service
     ports:
       - "5044:5044"
+      - "5045:5045"
     environment:
       - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=comments-api;Username=postgres;Password=mysecretpassword
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_KESTREL__ENDPOINTS__HTTP1__URL=http://+:5044
+      - ASPNETCORE_KESTREL__ENDPOINTS__HTTP1__PROTOCOLS=Http1
+      - ASPNETCORE_KESTREL__ENDPOINTS__HTTP2__URL=http://+:5045
+      - ASPNETCORE_KESTREL__ENDPOINTS__HTTP2__PROTOCOLS=Http2
     depends_on:
       postgres:
         condition: service_healthy

@@ -10,4 +10,8 @@ public interface ICommentRepository
     Task<int> CreateAsync(
         Comment comment,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
+        long topicId,
+        CancellationToken cancellationToken);
 }

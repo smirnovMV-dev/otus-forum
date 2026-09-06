@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<ItemGroup>
+		<PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
 		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Microsoft.OpenApi" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
@@ -9,6 +11,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\CommentsService.Application\CommentsService.Application.csproj" />
+		<ProjectReference Include="..\CommentsService.Grpc\CommentsService.Grpc.csproj" />
 		<ProjectReference Include="..\CommentsService.Infrastructure\CommentsService.Infrastructure.csproj" />
 	</ItemGroup>
 

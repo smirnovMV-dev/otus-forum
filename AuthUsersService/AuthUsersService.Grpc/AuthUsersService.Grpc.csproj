@@ -15,6 +15,6 @@
 
     <ItemGroup>
 		<Folder Include="Protos\" />
-        <Protobuf Include="Protos\users.proto" GrpcServices="Server" />
+        <Protobuf Include="Protos\*.proto" GrpcServices="Server" />
     </ItemGroup>
 </Project>

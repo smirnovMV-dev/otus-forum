@@ -1,7 +1,10 @@
 using CommentsService.Domain.Entities;
 using CommentsService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,5 +37,16 @@ internal sealed class CommentRepository : ICommentRepository
             _logger.LogError(ex.Message);
             return -1;
         }
+    }
+
+    public async Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
+        long topicId,
+        CancellationToken cancellationToken)
+    {
+        return (await _context.Comments
+            .Where(c => c.TopicId == topicId)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync(cancellationToken))
+            .AsReadOnly();
     }
 }
