@@ -69,4 +69,19 @@ internal sealed class TopicsRepository : ITopicsRepository
             return [];
         }
     }
+
+    public async Task<Topic?> GetByIdAsync(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _context.Topics.FindAsync([id], cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении темы с ID {TopicId}", id);
+            return null;
+        }
+    }
 }

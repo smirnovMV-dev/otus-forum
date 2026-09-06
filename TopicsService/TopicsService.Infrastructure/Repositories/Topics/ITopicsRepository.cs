@@ -15,4 +15,8 @@ public interface ITopicsRepository
     Task<IReadOnlyCollection<LatestTopicsModel>> GetLatestTopicsAsync(
         int count,
         CancellationToken cancellationToken);
+
+    Task<Topic?> GetByIdAsync(
+        long id,
+        CancellationToken cancellationToken);
 }

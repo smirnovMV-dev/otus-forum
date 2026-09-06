@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TopicsService.Application.Services.Externals.CommentsApiService;
 using TopicsService.Application.Services.Externals.UsersApiService;
 
 namespace TopicsService.Application.Extensions;
@@ -11,5 +12,6 @@ public static class ServiceCollectionExtensions
             cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
 
         services.AddTransient<IUsersApiServiceAdapter, UsersApiServiceAdapter>();
+        services.AddTransient<ICommentsApiServiceAdapter, CommentsApiServiceAdapter>();
     }
 }

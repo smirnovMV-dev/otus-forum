@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using TopicsService.API.Models.Topics.CreateTopic;
 using TopicsService.API.Models.Topics.GetLatestTopics;
+using TopicsService.API.Models.Topics.GetTopicWithComments;
 using TopicsService.Application.Topics.CreateTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
+using TopicsService.Application.Topics.GetTopicWithComments;
 
 namespace TopicsService.API.Controllers;
 
@@ -51,6 +53,29 @@ public class TopicController : ControllerBase
                 CreatedAt = r.CreatedAt
             }
             )],
+        };
+    }
+
+    [HttpGet("{id:long}/with-comments")]
+    public async Task<GetTopicWithCommentsResponse> GetWithComments(long id)
+    {
+        var result = await _mediator.Send(new GetTopicWithCommentsCommand(id));
+
+        return new GetTopicWithCommentsResponse
+        {
+            TopicId = result.TopicId,
+            Title = result.Title,
+            AuthorId = result.AuthorId,
+            CreatedAt = result.CreatedAt,
+            Comments = [.. result.Comments.Select(c => new CommentResponse
+            {
+                Id = c.Id,
+                TopicId = c.TopicId,
+                ParentCommentId = c.ParentCommentId,
+                AuthorNickname = c.AuthorNickname,
+                Content = c.Content,
+                CreatedAt = c.CreatedAt
+            })]
         };
     }
 }

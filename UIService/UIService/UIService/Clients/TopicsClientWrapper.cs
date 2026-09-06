@@ -25,4 +25,10 @@ public class TopicsClientWrapper : ITopicsClient
 
     public Task<GetLatestTopicsResponse> GetLatestAsync(GetLatestTopicsRequest body, CancellationToken cancellationToken)
         => _inner.GetLatestAsync(body, cancellationToken);
+
+    public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id)
+        => _inner.WithCommentsAsync(id);
+
+    public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, CancellationToken cancellationToken)
+        => _inner.WithCommentsAsync(id, cancellationToken);
 }

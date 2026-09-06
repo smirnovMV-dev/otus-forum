@@ -1,0 +1,118 @@
+@page "/topics/{TopicId:long}"
+@rendermode InteractiveServer
+@using System.Collections.Generic
+@using OtusForum.UI.Clients.Topics
+@inject ITopicsClient TopicsService
+@inject NavigationManager Navigation
+
+<PageTitle>@_topicWithComments?.Title</PageTitle>
+
+@if (_isLoading)
+{
+    <div class="d-flex justify-content-center my-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+}
+else if (_topicWithComments == null)
+{
+    <div class="container mt-5">
+        <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>Тема не найдена.
+        </div>
+        <a href="/topics" class="btn btn-outline-primary">← Вернуться к списку тем</a>
+    </div>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="mb-3">
+            <a href="/topics" class="btn btn-link p-0 text-decoration-none">← Вернуться к списку тем</a>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">@_topicWithComments.Title</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-person me-1"></i>
+                        Автор: @(_topicWithComments.AuthorId)
+                    </span>
+                    <span class="text-muted small">
+                        <i class="bi bi-clock me-1"></i>
+                        @_topicWithComments.CreatedAt.ToString("g")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="mb-3">
+            <i class="bi bi-chat-left-text me-2"></i>
+            Комментарии @_topicWithComments.Comments.Count
+        </h5>
+
+        @if (!_topicWithComments.Comments.Any())
+        {
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>Комментариев пока нет. Станьте первым!
+            </div>
+        }
+        else
+        {
+            <div class="comments-list">
+                @foreach (var comment in _topicWithComments.Comments)
+                {
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <span class="badge bg-info me-2">
+                                        <i class="bi bi-person me-1"></i>
+                                        @comment.AuthorNickname
+                                    </span>
+                                    <small class="text-muted ms-2">
+                                        <i class="bi bi-clock me-1"></i>
+                                        @comment.CreatedAt.ToString("g")
+                                    </small>
+                                </div>
+                            </div>
+                            <p class="card-text mb-0">@comment.Content</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public long TopicId { get; set; }
+
+    private GetTopicWithCommentsResponse? _topicWithComments;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTopicWithCommentsAsync();
+    }
+
+    private async Task LoadTopicWithCommentsAsync()
+    {
+        try
+        {
+            _topicWithComments = await TopicsService.WithCommentsAsync(TopicId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при получении темы с комментариями: {ex.Message}");
+            _topicWithComments = null;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

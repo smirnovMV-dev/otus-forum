@@ -108,7 +108,7 @@
             await Task.Delay(1000);
             Navigation.NavigateTo("/");
         }
-        catch (OtusForum.UI.Clients.Users.ApiException ex)
+        catch (OtusForum.UI.Clients.Users.ApiException)
         {
             _errorMessage = "Неверный email или пароль.";
         }
