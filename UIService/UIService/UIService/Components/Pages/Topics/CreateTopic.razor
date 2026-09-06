@@ -3,6 +3,7 @@
 @using System.ComponentModel.DataAnnotations
 @using OtusForum.UI.Clients.Topics
 @inject ITopicsClient TopicsService
+@inject UIService.Services.AuthService AuthService
 @inject NavigationManager Navigation
 
 <div class="container mt-4" style="max-width: 600px;">
@@ -12,7 +13,13 @@
 
     <h2 class="mb-4">🆕 Создание новой темы</h2>
 
-    @if (!string.IsNullOrEmpty(_errorMessage))
+    @if (!AuthService.IsAuthenticated)
+    {
+        <div class="alert alert-warning shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>Для создания темы необходимо <NavLink href="/login">войти в систему</NavLink>.
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_errorMessage))
     {
         <div class="alert alert-danger shadow-sm" role="alert">
             ❌ @_errorMessage
@@ -58,13 +65,19 @@
 
         try
         {
+            if (!AuthService.IsAuthenticated)
+            {
+                _errorMessage = "Необходимо авторизоваться для создания темы.";
+                return;
+            }
+
             var request = new CreateTopicRequest
             {
                 Title = _formModel.Title
             };
 
-            // Вызываем сгенерированный метод для отправки POST-запроса на бэкенд
-            await TopicsService.CreateAsync(null, request);
+            // Пробрасываем userId в заголовке X-UserId
+            await TopicsService.CreateAsync(AuthService.UserId, request);
 
             // Редирект на список тем после успешного сохранения
             Navigation.NavigateTo("/topics");

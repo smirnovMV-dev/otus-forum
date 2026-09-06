@@ -4,6 +4,7 @@ using OtusForum.UI.Clients.Users;
 using UIService.Clients;
 using UIService.Components;
 using UIService.Handlers;
+using UIService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,15 +32,7 @@ builder.Services.AddTransient<ITopicsClient>(sp =>
     return new TopicsClient(client) { BaseUrl = url.TrimEnd('/') };
 });
 
-builder.Services.AddTransient<IUsersClient>(sp =>
-{
-    var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var config = sp.GetRequiredService<IConfiguration>();
-    var url = config.GetValue<string>("ApiUrls:Auth") ?? "http://auth-users-service:5225";
-    var client = factory.CreateClient();
-    client.BaseAddress = new Uri(url);
-    return new UsersClient(client) { BaseUrl = url.TrimEnd('/') };
-});
+builder.Services.AddTransient<IUsersClient, UsersClientWrapper>();
 
 builder.Services.AddTransient<ICommentsClient>(sp =>
 {
@@ -51,6 +44,9 @@ builder.Services.AddTransient<ICommentsClient>(sp =>
     return new CommentsClient(client) { BaseUrl = url.TrimEnd('/') };
 });
 
+
+// Register authentication service
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

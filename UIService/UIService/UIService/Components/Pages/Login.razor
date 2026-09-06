@@ -1,0 +1,134 @@
+@page "/login"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using OtusForum.UI.Clients.Users
+@inject IUsersClient UsersService
+@inject UIService.Services.AuthService AuthService
+@inject NavigationManager Navigation
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="card-title mb-2">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Вход в систему
+                        </h2>
+                        <p class="text-muted">Введите свои учетные данные</p>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="alert alert-danger shadow-sm" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_successMessage))
+                    {
+                        <div class="alert alert-success shadow-sm" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>@_successMessage
+                        </div>
+                    }
+
+                    <EditForm Model="@_formModel" OnValidSubmit="HandleValidSubmit" FormName="LoginForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">Email</label>
+                            <InputText id="email" class="form-control form-control-lg" 
+                                       @bind-Value="_formModel.Email" 
+                                       placeholder="example@mail.ru" />
+                            <ValidationMessage For="@(() => _formModel.Email)" class="text-danger small mt-1" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-bold">Пароль</label>
+                            <InputText id="password" type="password" class="form-control form-control-lg" 
+                                       @bind-Value="_formModel.Password" 
+                                       placeholder="Введите пароль" />
+                            <ValidationMessage For="@(() => _formModel.Password)" class="text-danger small mt-1" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" disabled="@_isSubmitting">
+                                @if (_isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Вход...</span>
+                                }
+                                else
+                                {
+                                    <span>Войти</span>
+                                }
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <span class="text-muted">Нет аккаунта? </span>
+                            <NavLink class="fw-bold" href="/users/register">Зарегистрироваться</NavLink>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginFormModel _formModel = new();
+    private bool _isSubmitting = false;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        _isSubmitting = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var request = new LoginRequest
+            {
+                Email = _formModel.Email,
+                Password = _formModel.Password
+            };
+
+            var response = await UsersService.LoginAsync(request);
+
+            // Сохраняем данные пользователя
+            AuthService.SetUser(response.UserId, response.Token, response.Nickname);
+
+            _successMessage = $"Добро пожаловать, @{response.Nickname}!";
+
+            // Редирект на главную страницу после успешного входа
+            await Task.Delay(1000);
+            Navigation.NavigateTo("/");
+        }
+        catch (OtusForum.UI.Clients.Users.ApiException ex)
+        {
+            _errorMessage = "Неверный email или пароль.";
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Ошибка при входе: {ex.Message}";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    public class LoginFormModel
+    {
+        [Required(ErrorMessage = "Email обязателен для заполнения")]
+        [EmailAddress(ErrorMessage = "Введите корректный email")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Пароль обязателен для заполнения")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Пароль должен содержать от 6 до 100 символов")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
