@@ -1,3 +1,5 @@
+@using UIService.Services
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">UIService</a>
@@ -8,7 +10,20 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        
+        @if (AuthService.IsAuthenticated)
+        {
+            <div class="nav-item px-3 py-2">
+                <div class="user-info">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <span class="user-nickname">@AuthService.Nickname</span>
+                    <button class="btn btn-sm btn-outline-light ms-2" @onclick="Logout" title="Выйти">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="dropdown-divider"></div>
+        }
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>Главная
@@ -33,10 +48,28 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/login">
-                <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>Вход
-            </NavLink>
-        </div>
+        @if (!AuthService.IsAuthenticated)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/login">
+                    <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>Вход
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
+
+@code {
+    [Inject] private AuthService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    protected override void OnInitialized()
+    {
+        AuthService.OnChanged += StateHasChanged;
+    }
+
+    private async Task Logout()
+    {
+        AuthService.Clear();
+        Navigation.NavigateTo("/");
+    }
+}
