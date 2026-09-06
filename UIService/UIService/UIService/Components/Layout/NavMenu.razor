@@ -69,7 +69,7 @@
 
     private async Task Logout()
     {
-        AuthService.Clear();
+        await AuthService.ClearAsync();
         Navigation.NavigateTo("/");
     }
 }

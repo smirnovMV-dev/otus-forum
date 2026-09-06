@@ -6,6 +6,7 @@
 @inject IUsersClient UsersService
 @inject UIService.Services.AuthService AuthService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -100,7 +101,7 @@
             var response = await UsersService.LoginAsync(request);
 
             // Сохраняем данные пользователя
-            AuthService.SetUser(response.UserId, response.Token, response.Nickname);
+            await AuthService.SetUserAsync(response.UserId, response.Token, response.Nickname);
 
             _successMessage = $"Добро пожаловать, @{response.Nickname}!";
 

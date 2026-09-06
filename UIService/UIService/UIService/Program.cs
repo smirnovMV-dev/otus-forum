@@ -47,6 +47,7 @@ builder.Services.AddTransient<ICommentsClient>(sp =>
 
 // Register authentication service
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<CommentRefreshService>();
 
 var app = builder.Build();
 

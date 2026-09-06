@@ -97,6 +97,16 @@
         Navigation.NavigateTo("/topics");
     }
 
+    protected override void OnInitialized()
+    {
+        AuthService.OnChanged += StateHasChanged;
+    }
+
+    protected void Dispose()
+    {
+        AuthService.OnChanged -= StateHasChanged;
+    }
+
     // Внутренняя модель для UI-валидации полей ввода
     public class TopicFormModel
     {

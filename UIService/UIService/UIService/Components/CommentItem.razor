@@ -1,0 +1,174 @@
+@using System.Collections.Generic
+@using System.Linq
+@using OtusForum.UI.Clients.Comments
+@using Microsoft.AspNetCore.Components
+@inject ICommentsClient CommentsClient
+@inject UIService.Services.AuthService AuthService
+@inject UIService.Services.CommentRefreshService CommentRefreshService
+@inject NavigationManager Navigation
+
+@* Компонент для отображения одного комментария и его ответов *@
+@{
+    var commentId = Comment.Id;
+    var replies = AllComments.Where(c => c.ParentCommentId == commentId).OrderBy(c => c.CreatedAt).ToList();
+    var isReplying = ReplyToCommentId == commentId;
+}
+
+<div class="card mb-3 shadow-sm @(ReplyDepth > 0 ? "comment-reply" : "")" style="margin-left: @(ReplyDepth * 40)">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <span class="badge bg-info me-2">
+                    <i class="bi bi-person me-1"></i>
+                    @Comment.AuthorNickname
+                </span>
+                <small class="text-muted ms-2">
+                    <i class="bi bi-clock me-1"></i>
+                    @Comment.CreatedAt.ToString("g")
+                </small>
+            </div>
+        </div>
+        <p class="card-text mb-2">@Comment.Content</p>
+        
+        @if (AuthService.IsAuthenticated)
+        {
+            <button class="btn btn-sm btn-outline-primary" @onclick="ToggleReply">
+                <i class="bi bi-reply me-1"></i>Ответить
+            </button>
+        }
+
+        @if (isReplying)
+        {
+            <div class="mt-3">
+                @if (!string.IsNullOrEmpty(_replyMessage))
+                {
+                    <div class="alert @_replyMessageType role="alert">
+                        @_replyMessage
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label for="replyContent-@commentId" class="form-label">Ваш ответ</label>
+                    <textarea class="form-control" id="replyContent-@commentId" rows="3" @bind="_replyContent" placeholder="Введите текст ответа..." maxlength="5000"></textarea>
+                    <div class="form-text text-muted">@(_replyContent.Length)/5000 символов</div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button class="btn btn-sm btn-secondary me-2" @onclick="CancelReply">Отмена</button>
+                    <button class="btn btn-sm btn-success" @onclick="SubmitReplyAsync" disabled="@_isReplySubmitting">
+                        @if (_isReplySubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Отправка...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-send me-1"></i> <span>Ответить</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (replies.Any())
+        {
+            <div class="mt-3">
+                @foreach (var reply in replies)
+                {
+                    <CommentItem Comment="reply" AllComments="AllComments" TopicId="TopicId" ReplyDepth="ReplyDepth + 1" />
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public CommentResponse Comment { get; set; } = default!;
+    [Parameter] public IReadOnlyCollection<CommentResponse> AllComments { get; set; } = new List<CommentResponse>();
+    [Parameter] public long TopicId { get; set; }
+    [Parameter] public int ReplyDepth { get; set; } = 0;
+
+    private string _replyContent = string.Empty;
+    private bool _isReplySubmitting = false;
+    private string? _replyMessage;
+    private string _replyMessageType = "alert-info";
+    private long? _replyToCommentId;
+
+    private long? ReplyToCommentId
+    {
+        get => _replyToCommentId;
+        set
+        {
+            _replyToCommentId = value;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleReply()
+    {
+        if (_replyToCommentId == Comment.Id)
+        {
+            _replyToCommentId = null;
+        }
+        else
+        {
+            _replyToCommentId = Comment.Id;
+        }
+    }
+
+    private void CancelReply()
+    {
+        _replyToCommentId = null;
+        _replyContent = string.Empty;
+        _replyMessage = null;
+    }
+
+    private async Task SubmitReplyAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_replyContent))
+        {
+            _replyMessage = "Ответ не может быть пустым.";
+            _replyMessageType = "alert-danger";
+            return;
+        }
+
+        if (!AuthService.IsAuthenticated)
+        {
+            _replyMessage = "Необходимо авторизоваться для добавления ответа.";
+            _replyMessageType = "alert-danger";
+            return;
+        }
+
+        _isReplySubmitting = true;
+        _replyMessage = null;
+
+        try
+        {
+            var request = new CreateCommentRequest
+            {
+                TopicId = TopicId,
+                ParentCommentId = Comment.Id,
+                Content = _replyContent.Trim()
+            };
+
+            await CommentsClient.CreateAsync(AuthService.UserId, request);
+
+            _replyContent = string.Empty;
+            _replyToCommentId = null;
+            _replyMessage = "Ответ успешно добавлен!";
+            _replyMessageType = "alert-success";
+
+            // Уведомляем родительский компонент об обновлении
+            CommentRefreshService.NotifyCommentAdded();
+        }
+        catch (Exception ex)
+        {
+            _replyMessage = $"Не удалось добавить ответ: {ex.Message}";
+            _replyMessageType = "alert-danger";
+        }
+        finally
+        {
+            _isReplySubmitting = false;
+        }
+    }
+}
