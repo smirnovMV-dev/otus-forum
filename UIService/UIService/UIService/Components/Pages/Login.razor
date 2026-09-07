@@ -104,6 +104,7 @@
             await AuthService.SetUserAsync(response.UserId, response.Token, response.Nickname);
 
             _successMessage = $"Добро пожаловать, @{response.Nickname}!";
+            StateHasChanged();
 
             // Редирект на главную страницу после успешного входа
             await Task.Delay(1000);

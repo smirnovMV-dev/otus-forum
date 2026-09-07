@@ -1,8 +1,10 @@
 @using UIService.Services
+@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+@rendermode InteractiveServer
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">UIService</a>
+        <a class="navbar-brand" href="">Otus Forum</a>
     </div>
 </div>
 
@@ -17,7 +19,7 @@
                     <i class="bi bi-person-circle me-2"></i>
                     <span class="user-nickname">@AuthService.Nickname</span>
                     <button class="btn btn-sm btn-outline-light ms-2" @onclick="Logout" title="Выйти">
-                        <i class="bi bi-box-arrow-right"></i>
+                        <i class="bi bi-box-arrow-up"></i>
                     </button>
                 </div>
             </div>
@@ -59,12 +61,36 @@
     </nav>
 </div>
 
+@implements IDisposable
+
 @code {
     [Inject] private AuthService AuthService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    private bool _initialized;
+
     protected override void OnInitialized()
     {
         AuthService.OnChanged += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_initialized)
+        {
+            await AuthService.InitializeAsync(JSRuntime);
+            _initialized = true;
+            StateHasChanged();
+        }
+    }
+
+    protected void Dispose()
+    {
+        AuthService.OnChanged -= StateHasChanged;
+    }
+
+    void IDisposable.Dispose()
+    {
+        Dispose();
     }
 
     private async Task Logout()
