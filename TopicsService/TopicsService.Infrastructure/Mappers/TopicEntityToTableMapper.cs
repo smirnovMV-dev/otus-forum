@@ -34,6 +34,11 @@ internal static class TopicEntityToTableMapper
                 .HasColumnName(TopicsTable.CreatedAtName)
                 .HasColumnType("timestamp with time zone")
                 .IsRequired();
+
+            topic.Property(u => u.UpdatedAt)
+                .HasColumnName(TopicsTable.UpdatedAtName)
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
         });
 
         return modelBuilder;

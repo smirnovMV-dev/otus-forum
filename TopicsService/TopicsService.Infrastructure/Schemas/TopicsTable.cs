@@ -9,4 +9,5 @@ internal static class TopicsTable
     public const string TitleName = "title";
     public const string AuthorIdName = "author_id";
     public const string CreatedAtName = "created_at";
+    public const string UpdatedAtName = "updated_at";
 }

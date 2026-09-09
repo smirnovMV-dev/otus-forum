@@ -12,6 +12,8 @@ public sealed record Topic
 
     public DateTimeOffset CreatedAt { get; }
 
+    public DateTimeOffset UpdatedAt { get; }
+
     public long SetId(long id) => Id = id;
 
     public static Topic Create(
@@ -20,16 +22,19 @@ public sealed record Topic
         DateTimeOffset createdAt)
     => new(title,
         authorId,
+        createdAt,
         createdAt);
 
 
     private Topic(
         string title,
         long authorId,
-        DateTimeOffset createdAt) 
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt) 
     {
         Title = title;
         AuthorId = authorId;
         CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
     }
 }
