@@ -18,6 +18,7 @@ builder.Services.AddGrpcReflection();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+app.ApplyMigrations();
 
 if (app.Environment.IsDevelopment())
 {

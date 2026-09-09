@@ -7,9 +7,6 @@
     <File Path="docker-compose.yml" />
     <File Path="Dockerfile" />
   </Folder>
-  <Folder Name="/Элементы решения/">
-    <File Path="CommentsService.Grpc/CommentsService.Grpc.csproj" />
-  </Folder>
   <Project Path="CommentsService.API/CommentsService.API.csproj" />
   <Project Path="CommentsService.Application/CommentsService.Application.csproj" Id="d29de2d7-51ef-4bb0-8db1-70d179c0e362" />
   <Project Path="CommentsService.Domain/CommentsService.Domain.csproj" Id="5ac2a60a-c2c1-4690-848b-96695cf32e82" />

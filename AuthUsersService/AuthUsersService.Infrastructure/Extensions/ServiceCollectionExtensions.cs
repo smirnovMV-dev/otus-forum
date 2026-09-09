@@ -5,6 +5,9 @@ using AuthUsersService.Infrastructure.Repositories.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace AuthUsersService.Infrastructure.Extensions;
 
@@ -40,5 +43,25 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connectionString));
 
         return services;
+    }
+
+    public static IHost ApplyMigrations(this IHost app)
+    {
+        using var scope = app.Services.CreateScope();
+        var services = scope.ServiceProvider;
+
+        try
+        {
+            var context = services.GetRequiredService<ApplicationDbContext>();
+            context.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<ApplicationDbContext>>();
+            logger.LogError(ex, "Ошибка применении миграций.");
+            throw;
+        }
+
+        return app;
     }
 }
