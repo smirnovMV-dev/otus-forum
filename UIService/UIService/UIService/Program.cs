@@ -17,9 +17,21 @@ builder.Services.AddRazorComponents()
 builder.Services.AddTransient<ErrorLoggingHandler>();
 
 // Named HttpClients for general use.
-builder.Services.AddHttpClient("TopicsClient", client => { client.BaseAddress = new Uri("http://topics-service:5294/"); });
-builder.Services.AddHttpClient("UsersClient", client => { client.BaseAddress = new Uri("http://auth-users-service:5225/"); });
-builder.Services.AddHttpClient("CommentsClient", client => { client.BaseAddress = new Uri("http://comments-service:5044/"); });
+builder.Services.AddHttpClient("TopicsClient", client =>
+{
+    client.BaseAddress = new Uri("http://topics-service:5294/");
+    client.Timeout = TimeSpan.FromMinutes(1);
+});
+builder.Services.AddHttpClient("UsersClient", client =>
+{
+    client.BaseAddress = new Uri("http://auth-users-service:5225/");
+    client.Timeout = TimeSpan.FromMinutes(1);
+});
+builder.Services.AddHttpClient("CommentsClient", client =>
+{
+    client.BaseAddress = new Uri("http://comments-service:5044/");
+    client.Timeout = TimeSpan.FromMinutes(1);
+});
 
 // API client registrations using factory delegates (avoid hardcoded BaseUrl from generated clients).
 builder.Services.AddTransient<ITopicsClient>(sp =>
