@@ -184,10 +184,10 @@
             topicCount = latestTopics.Count;
 
             // Загружаем реальное количество пользователей
-            userCount = await UsersClient.CountAsync();
+            userCount = await UsersClient.CountUsersAsync();
 
-            // Placeholder — метод получения статистики ролей пока не реализован в API
-            roleCount = 0;
+            // Загружаем реальное количество ролей
+            roleCount = await UsersClient.CountRolesAsync();
 
             loading = false;
         }

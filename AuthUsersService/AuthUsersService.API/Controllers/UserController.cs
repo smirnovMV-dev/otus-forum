@@ -65,7 +65,7 @@ public sealed class UserController : ControllerBase
         };
     }
 
-    [HttpGet("Count")]
+    [HttpGet("CountUsers")]
     public async Task<int> Count()
     {
         var command = new CountUsersCommand();

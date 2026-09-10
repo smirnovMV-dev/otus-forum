@@ -37,9 +37,15 @@ public class UsersClientWrapper : IUsersClient
     public Task<LoginResponse> LoginAsync(LoginRequest body, CancellationToken cancellationToken)
         => _inner.LoginAsync(body, cancellationToken);
 
-    public Task<int> CountAsync()
-        => _inner.CountAsync();
+    public Task<int> CountUsersAsync()
+        => _inner.CountUsersAsync();
 
-    public Task<int> CountAsync(CancellationToken cancellationToken)
-        => _inner.CountAsync(cancellationToken);
+    public Task<int> CountUsersAsync(CancellationToken cancellationToken)
+        => _inner.CountUsersAsync(cancellationToken);
+
+    public Task<int> CountRolesAsync()
+        => _inner.CountRolesAsync();
+
+    public Task<int> CountRolesAsync(CancellationToken cancellationToken)
+        => _inner.CountRolesAsync(cancellationToken);
 }

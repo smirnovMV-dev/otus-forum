@@ -1,5 +1,6 @@
 using AuthUsersService.Domain.Entities;
 using AuthUsersService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -33,6 +34,14 @@ internal sealed class RoleRepository : IRoleRepository
         {
             _logger.LogError(ex.Message);
             return -1;
-        }        
+        }
+    }
+
+    public async Task<int> CountAsync(
+        CancellationToken cancellationToken)
+    {
+        return await _context.Roles
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
     }
 }

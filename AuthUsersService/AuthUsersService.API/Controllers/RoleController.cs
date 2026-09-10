@@ -1,4 +1,5 @@
 using AuthUsersService.API.Models.Roles.CreateRole;
+using AuthUsersService.Application.Roles.CountRoles;
 using AuthUsersService.Application.Roles.CreateRole;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -26,5 +27,12 @@ public sealed class RoleController : ControllerBase
 
         await _mediator.Send(command);
         return new CreateRoleResponse();
+    }
+
+    [HttpGet("CountRoles")]
+    public async Task<int> Count()
+    {
+        var command = new CountRolesCommand();
+        return await _mediator.Send(command);
     }
 }

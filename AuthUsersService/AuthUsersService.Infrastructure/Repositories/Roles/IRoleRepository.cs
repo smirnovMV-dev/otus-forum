@@ -9,4 +9,7 @@ public interface IRoleRepository
     Task<int> CreateAsync(
         Role role,
         CancellationToken cancellationToken);
+
+    Task<int> CountAsync(
+        CancellationToken cancellationToken);
 }
