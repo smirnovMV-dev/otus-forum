@@ -78,4 +78,12 @@ internal sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
+
+    public async Task<int> CountAsync(
+        CancellationToken cancellationToken)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+    }
 }

@@ -36,4 +36,10 @@ public class UsersClientWrapper : IUsersClient
 
     public Task<LoginResponse> LoginAsync(LoginRequest body, CancellationToken cancellationToken)
         => _inner.LoginAsync(body, cancellationToken);
+
+    public Task<int> CountAsync()
+        => _inner.CountAsync();
+
+    public Task<int> CountAsync(CancellationToken cancellationToken)
+        => _inner.CountAsync(cancellationToken);
 }

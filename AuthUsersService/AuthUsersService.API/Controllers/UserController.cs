@@ -3,6 +3,7 @@ using AuthUsersService.API.Models.Users.AssignUserRole;
 using AuthUsersService.API.Models.Users.RegisterUser;
 using AuthUsersService.Application.Auth.LoginUser;
 using AuthUsersService.Application.Users.AssignUserRole;
+using AuthUsersService.Application.Users.CountUsers;
 using AuthUsersService.Application.Users.RegisterUser;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -62,5 +63,12 @@ public sealed class UserController : ControllerBase
             UserId = result.UserId,
             Nickname = result.Nickname
         };
+    }
+
+    [HttpGet("Count")]
+    public async Task<int> Count()
+    {
+        var command = new CountUsersCommand();
+        return await _mediator.Send(command);
     }
 }

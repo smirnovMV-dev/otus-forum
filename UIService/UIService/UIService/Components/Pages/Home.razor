@@ -172,6 +172,7 @@
     private string? error;
 
     [Inject] private ITopicsClient TopicsClient { get; set; } = default!;
+    [Inject] private IUsersClient UsersClient { get; set; } = default!;
 
     private async Task LoadDataAsync()
     {
@@ -182,8 +183,10 @@
             latestTopics = topicsResponse.LatestTopics.ToList();
             topicCount = latestTopics.Count;
 
-            // Placeholder — метод получения статистики пользователей/ролей пока не реализован в API
-            userCount = 0;
+            // Загружаем реальное количество пользователей
+            userCount = await UsersClient.CountAsync();
+
+            // Placeholder — метод получения статистики ролей пока не реализован в API
             roleCount = 0;
 
             loading = false;
