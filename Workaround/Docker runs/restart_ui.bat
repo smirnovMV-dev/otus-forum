@@ -1,8 +1,7 @@
 @echo off
 chcp 65001 > nul
 
-cd /d "%~dp0..\..\GatewayService"
-echo Текущая папка: %CD%
+cd C:\otus-forum\UIService
 docker-compose down
 docker-compose up --build -d
 
