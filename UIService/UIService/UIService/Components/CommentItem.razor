@@ -12,6 +12,8 @@
     var commentId = Comment.Id;
     var replies = AllComments.Where(c => c.ParentCommentId == commentId).OrderBy(c => c.CreatedAt).ToList();
     var isReplying = ReplyToCommentId == commentId;
+    var isEditing = EditCommentId == commentId;
+    var isAuthor = AuthService.IsAuthenticated && string.Equals(Comment.AuthorNickname, AuthService.Nickname, StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="card mb-3 shadow-sm @(ReplyDepth > 0 ? "comment-reply" : "")" style="margin-left: @(ReplyDepth * 40)">
@@ -30,11 +32,51 @@
         </div>
         <p class="card-text mb-2">@Comment.Content</p>
         
-        @if (AuthService.IsAuthenticated)
+        @if (isEditing)
         {
-            <button class="btn btn-sm btn-outline-primary" @onclick="ToggleReply">
+            <div class="mt-3">
+                @if (!string.IsNullOrEmpty(_editMessage))
+                {
+                    <div class="alert @_editMessageType role="alert">
+                        @_editMessage
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label for="editContent-@commentId" class="form-label">Редактирование комментария</label>
+                    <textarea class="form-control" id="editContent-@commentId" rows="3" @bind="_editContent" placeholder="Введите текст..." maxlength="5000"></textarea>
+                    <div class="form-text text-muted">@(_editContent.Length)/5000 символов</div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button class="btn btn-sm btn-secondary me-2" @onclick="CancelEdit">Отмена</button>
+                    <button class="btn btn-sm btn-warning" @onclick="SubmitEditAsync">
+                        @if (_isEditing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Сохранение...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check me-1"></i> <span>Сохранить</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        }
+        
+        @if (AuthService.IsAuthenticated && !isEditing)
+        {
+            <button class="btn btn-sm btn-outline-primary me-2" @onclick="ToggleReply">
                 <i class="bi bi-reply me-1"></i>Ответить
             </button>
+            
+            @if (isAuthor)
+            {
+                <button class="btn btn-sm btn-outline-warning" @onclick="ToggleEdit">
+                    <i class="bi bi-pencil me-1"></i>Изменить
+                </button>
+            }
         }
 
         @if (isReplying)
@@ -94,6 +136,23 @@
     private string _replyMessageType = "alert-info";
     private long? _replyToCommentId;
 
+    // Редактирование
+    private string _editContent = string.Empty;
+    private bool _isEditing = false;
+    private string? _editMessage;
+    private string _editMessageType = "alert-info";
+    private long? _editCommentId;
+
+    private long? EditCommentId
+    {
+        get => _editCommentId;
+        set
+        {
+            _editCommentId = value;
+            StateHasChanged();
+        }
+    }
+
     private long? ReplyToCommentId
     {
         get => _replyToCommentId;
@@ -121,6 +180,79 @@
         _replyToCommentId = null;
         _replyContent = string.Empty;
         _replyMessage = null;
+    }
+
+    // Редактирование
+    private void ToggleEdit()
+    {
+        if (_editCommentId == Comment.Id)
+        {
+            _editCommentId = null;
+            _editContent = string.Empty;
+            _editMessage = null;
+        }
+        else
+        {
+            _editCommentId = Comment.Id;
+            _editContent = Comment.Content;
+            _editMessage = null;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editCommentId = null;
+        _editContent = string.Empty;
+        _editMessage = null;
+    }
+
+    private async Task SubmitEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editContent))
+        {
+            _editMessage = "Комментарий не может быть пустым.";
+            _editMessageType = "alert-danger";
+            return;
+        }
+
+        if (!AuthService.IsAuthenticated)
+        {
+            _editMessage = "Необходимо авторизоваться для редактирования.";
+            _editMessageType = "alert-danger";
+            return;
+        }
+
+        _isEditing = true;
+        _editMessage = null;
+
+        try
+        {
+            var request = new UpdateCommentRequest
+            {
+                TopicId = TopicId,
+                ParentCommentId = Comment.ParentCommentId,
+                Content = _editContent.Trim()
+            };
+
+            await CommentsClient.UpdateAsync(Comment.Id, AuthService.UserId, request);
+
+            _editContent = string.Empty;
+            _editCommentId = null;
+            _editMessage = "Комментарий успешно обновлён!";
+            _editMessageType = "alert-success";
+
+            // Уведомляем родительский компонент об обновлении
+            CommentRefreshService.NotifyCommentAdded();
+        }
+        catch (Exception ex)
+        {
+            _editMessage = $"Не удалось обновить комментарий: {ex.Message}";
+            _editMessageType = "alert-danger";
+        }
+        finally
+        {
+            _isEditing = false;
+        }
     }
 
     private async Task SubmitReplyAsync()

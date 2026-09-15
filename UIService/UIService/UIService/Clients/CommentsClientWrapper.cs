@@ -18,4 +18,10 @@ public class CommentsClientWrapper : ICommentsClient
 
     public Task<CreateCommentResponse> CreateAsync(long? userId, CreateCommentRequest body, CancellationToken cancellationToken)
         => _inner.CreateAsync(userId, body, cancellationToken);
+
+    public Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body)
+        => _inner.UpdateAsync(id, x_UserId, body);
+
+    public Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body, CancellationToken cancellationToken)
+        => _inner.UpdateAsync(id, x_UserId, body, cancellationToken);
 }

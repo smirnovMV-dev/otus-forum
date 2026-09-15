@@ -11,6 +11,10 @@ public interface ICommentRepository
         Comment comment,
         CancellationToken cancellationToken);
 
+    Task<int> UpdateAsync(
+        Comment comment,
+        CancellationToken cancellationToken);
+
     Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
         long topicId,
         CancellationToken cancellationToken);

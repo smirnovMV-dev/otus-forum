@@ -46,6 +46,10 @@ internal static class CommentEntityToTableMapper
                 .HasColumnType("timestamp with time zone")
                 .IsRequired();
 
+            entity.Property(e => e.UpdatedByUserId)
+                .HasColumnName("updated_by_user_id")
+                .HasColumnType("bigint");
+
             entity.HasIndex(e => e.TopicId);
         });
 

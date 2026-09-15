@@ -1,4 +1,3 @@
-using CommentsService.Domain.Entities;
 using CommentsService.Infrastructure.Repositories.Comments;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;

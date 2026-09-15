@@ -39,6 +39,22 @@ internal sealed class CommentRepository : ICommentRepository
         }
     }
 
+    public async Task<int> UpdateAsync(
+        Comment comment,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _context.Comments.Update(comment);
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return -1;
+        }
+    }
+
     public async Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
         long topicId,
         CancellationToken cancellationToken)

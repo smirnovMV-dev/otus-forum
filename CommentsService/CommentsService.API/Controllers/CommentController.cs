@@ -1,5 +1,7 @@
 using CommentsService.API.Models.Comments.CreateComment;
+using CommentsService.API.Models.Comments.UpdateComment;
 using CommentsService.Application.Comments.CreateComment;
+using CommentsService.Application.Comments.UpdateComment;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -31,5 +33,23 @@ public class CommentController : ControllerBase
         await _mediator.Send(command);
 
         return new CreateCommentResponse();
+    }
+
+    [HttpPut(nameof(Update))]
+    public async Task<UpdateCommentResponse> Update(
+        long id,
+        [FromBody] UpdateCommentRequest request,
+        [FromHeader(Name = "X-UserId")] long updatedByUserId)
+    {
+        var command = new UpdateCommentCommand(
+            id,
+            request.TopicId,
+            request.ParentCommentId,
+            updatedByUserId,
+            request.Content);
+
+        await _mediator.Send(command);
+
+        return new UpdateCommentResponse();
     }
 }

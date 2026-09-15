@@ -5,12 +5,13 @@ namespace CommentsService.Domain.Entities;
 public sealed record Comment
 {
     public long Id { get; private set; }
-    public long TopicId { get; }
-    public long? ParentCommentId { get; }
+    public long TopicId { get; private set; }
+    public long? ParentCommentId { get; private set; }
     public long AuthorId { get; }
-    public string Content { get; }
+    public string Content { get; private set; }
     public DateTimeOffset CreatedAt { get; }
-    public DateTimeOffset UpdatedAt { get; }
+    public DateTimeOffset UpdatedAt { get; private set; }
+    public long? UpdatedByUserId { get; private set; }
 
     public static Comment Create(
         long topicId,
@@ -28,6 +29,22 @@ public sealed record Comment
     }
 
     public long SetId(long id) => Id = id;
+
+    public void Update(long topicId, long? parentCommentId, string content, DateTimeOffset updatedAt, long? updatedByUserId = null)
+    {
+        TopicId = topicId;
+        ParentCommentId = parentCommentId;
+        Content = content;
+        UpdatedAt = updatedAt;
+        UpdatedByUserId = updatedByUserId;
+    }
+
+    public void Update(string content, DateTimeOffset updatedAt, long? updatedByUserId = null)
+    {
+        Content = content;
+        UpdatedAt = updatedAt;
+        UpdatedByUserId = updatedByUserId;
+    }
 
     private Comment (
         long topicId,
