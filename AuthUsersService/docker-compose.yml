@@ -16,7 +16,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - otus-network
+      otus-network:
+        aliases:
+          - auth-users-postgres
 
   auth-users-service:
     build:
@@ -27,7 +29,7 @@ services:
       - "5225:5225"
       - "5226:5226"
     environment:
-      - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=auth-users;Username=postgres;Password=mysecretpassword
+      - ConnectionStrings__PostgresConnection=Host=auth-users-postgres;Port=5432;Database=auth-users;Username=postgres;Password=mysecretpassword
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       postgres:

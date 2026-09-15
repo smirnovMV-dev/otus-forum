@@ -16,7 +16,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - otus-network
+      otus-network:
+        aliases:
+          - comments-postgres
 
   comments-service:
     build:
@@ -27,7 +29,7 @@ services:
       - "5044:5044"
       - "5045:5045"
     environment:
-      - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=comments-api;Username=postgres;Password=mysecretpassword
+      - ConnectionStrings__PostgresConnection=Host=comments-postgres;Port=5432;Database=comments-api;Username=postgres;Password=mysecretpassword
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_KESTREL__ENDPOINTS__HTTP1__URL=http://+:5044
       - ASPNETCORE_KESTREL__ENDPOINTS__HTTP1__PROTOCOLS=Http1

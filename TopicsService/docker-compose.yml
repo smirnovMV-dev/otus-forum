@@ -16,7 +16,9 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - otus-network
+      otus-network:
+        aliases:
+          - topics-postgres
 
   topics-service:
     build:
@@ -26,7 +28,7 @@ services:
     ports:
       - "5294:5294"
     environment:
-      - ConnectionStrings__PostgresConnection=Host=postgres;Port=5432;Database=topics-api;Username=postgres;Password=mysecretpassword
+      - ConnectionStrings__PostgresConnection=Host=topics-postgres;Port=5432;Database=topics-api;Username=postgres;Password=mysecretpassword
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       postgres:
