@@ -31,4 +31,10 @@ public class TopicsClientWrapper : ITopicsClient
 
     public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, CancellationToken cancellationToken)
         => _inner.WithCommentsAsync(id, cancellationToken);
+
+    public Task TopicAsync(long id, long? userId, UpdateTopicRequest body)
+        => _inner.TopicAsync(id, userId, body);
+
+    public Task TopicAsync(long id, long? userId, UpdateTopicRequest body, CancellationToken cancellationToken)
+        => _inner.TopicAsync(id, userId, body, cancellationToken);
 }

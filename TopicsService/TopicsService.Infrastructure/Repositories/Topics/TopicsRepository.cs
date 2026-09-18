@@ -84,4 +84,20 @@ internal sealed class TopicsRepository : ITopicsRepository
             return null;
         }
     }
+
+    public async Task UpdateAsync(
+        Topic topic,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _context.Topics.Update(topic);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при обновлении темы с ID {TopicId}", topic.Id);
+            throw;
+        }
+    }
 }

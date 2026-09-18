@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using TopicsService.API.Models.Topics.CreateTopic;
 using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.API.Models.Topics.GetTopicWithComments;
+using TopicsService.API.Models.Topics.UpdateTopic;
 using TopicsService.Application.Topics.CreateTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
 using TopicsService.Application.Topics.GetTopicWithComments;
+using TopicsService.Application.Topics.UpdateTopic;
 
 namespace TopicsService.API.Controllers;
 
@@ -77,5 +79,20 @@ public class TopicController : ControllerBase
                 CreatedAt = c.CreatedAt
             })]
         };
+    }
+
+    [HttpPut("{id:long}")]
+    public async Task<IActionResult> Update(
+        long id,
+        [FromBody] UpdateTopicRequest request,
+        [FromHeader(Name = "X-UserId")] long userId)
+    {
+        var command = new UpdateTopicCommand(
+            id,
+            request.Title,
+            userId);
+
+        await _mediator.Send(command);
+        return Ok(new UpdateTopicResponse());
     }
 }

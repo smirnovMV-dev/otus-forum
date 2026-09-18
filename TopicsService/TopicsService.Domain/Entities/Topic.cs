@@ -6,13 +6,13 @@ public sealed record Topic
 {
     public long Id { get; private set; }
 
-    public string Title { get; }
+    public string Title { get; private set; }
 
     public long AuthorId { get; }
 
     public DateTimeOffset CreatedAt { get; }
 
-    public DateTimeOffset UpdatedAt { get; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
     public long SetId(long id) => Id = id;
 
@@ -35,6 +35,12 @@ public sealed record Topic
         Title = title;
         AuthorId = authorId;
         CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
+    }
+
+    public void UpdateTitle(string newTitle, DateTimeOffset updatedAt)
+    {
+        Title = newTitle;
         UpdatedAt = updatedAt;
     }
 }

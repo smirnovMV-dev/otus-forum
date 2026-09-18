@@ -19,4 +19,8 @@ public interface ITopicsRepository
     Task<Topic?> GetByIdAsync(
         long id,
         CancellationToken cancellationToken);
+
+    Task UpdateAsync(
+        Topic topic,
+        CancellationToken cancellationToken);
 }

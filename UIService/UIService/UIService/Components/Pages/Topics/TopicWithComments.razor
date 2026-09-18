@@ -4,6 +4,7 @@
 @using System.Linq
 @using OtusForum.UI.Clients.Comments
 @using OtusForum.UI.Clients.Topics
+@using Microsoft.AspNetCore.Components.Web
 @inject ITopicsClient TopicsService
 @inject ICommentsClient CommentsClient
 @inject UIService.Services.AuthService AuthService
@@ -47,10 +48,18 @@ else
                         <i class="bi bi-person me-1"></i>
                         Автор: @(_topicWithComments.AuthorId)
                     </span>
-                    <span class="text-muted small">
-                        <i class="bi bi-clock me-1"></i>
-                        @_topicWithComments.CreatedAt.ToString("g")
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        @if (AuthService.IsAuthenticated && AuthService.UserId == _topicWithComments.AuthorId)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" @onclick="ToggleEditModal">
+                                <i class="bi bi-pencil me-1"></i>Редактировать
+                            </button>
+                        }
+                        <span class="text-muted small">
+                            <i class="bi bi-clock me-1"></i>
+                            @_topicWithComments.CreatedAt.ToString("g")
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,6 +133,54 @@ else
             </div>
         }
     </div>
+
+    @* Модальное окно редактирования темы *@
+    @if (_showEditModal)
+    {
+        <div class="modal fade show" id="editTopicModal" tabindex="-1" style="display: block; background-color: rgba(0, 0, 0, 0.5);" data-bs-dismiss="modal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-pencil-square me-2"></i>Редактирование темы
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="ToggleEditModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if (!string.IsNullOrEmpty(_editErrorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle me-2"></i>@_editErrorMessage
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label for="editTopicTitle" class="form-label fw-bold">Заголовок темы</label>
+                            <InputText id="editTopicTitle" class="form-control form-control-lg" @bind-Value="_editTopicTitle" />
+                            <div class="form-text text-muted">@(_editTopicTitle?.Length ?? 0)/100 символов</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="ToggleEditModal">
+                            <i class="bi bi-x-circle me-1"></i>Отмена
+                        </button>
+                        <button type="button" class="btn btn-primary" @onclick="UpdateTopicAsync">
+                            @if (_isUpdating)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Сохранение...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span>Сохранить</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
 
 @code {
@@ -137,6 +194,10 @@ else
     private string _submitMessageType = "alert-info";
 
     private bool _initialized;
+    private bool _showEditModal = false;
+    private string _editTopicTitle = string.Empty;
+    private bool _isUpdating = false;
+    private string? _editErrorMessage;
 
     protected override void OnInitialized()
     {
@@ -239,6 +300,68 @@ else
         finally
         {
             _isSubmitting = false;
+        }
+    }
+
+    private void ToggleEditModal()
+    {
+        _showEditModal = !_showEditModal;
+        _editErrorMessage = null;
+
+        if (_showEditModal)
+        {
+            _editTopicTitle = _topicWithComments?.Title ?? string.Empty;
+        }
+    }
+
+    private async Task UpdateTopicAsync()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            _editErrorMessage = "Необходимо авторизоваться для редактирования темы.";
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editTopicTitle))
+        {
+            _editErrorMessage = "Заголовок темы не может быть пустым.";
+            StateHasChanged();
+            return;
+        }
+
+        if (_editTopicTitle.Length < 5)
+        {
+            _editErrorMessage = "Заголовок должен содержать минимум 5 символов.";
+            StateHasChanged();
+            return;
+        }
+
+        _isUpdating = true;
+        _editErrorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var request = new UpdateTopicRequest
+            {
+                Title = _editTopicTitle.Trim()
+            };
+
+            await TopicsService.TopicAsync(TopicId, AuthService.UserId, request);
+
+            _showEditModal = false;
+            await LoadTopicWithCommentsAsync();
+        }
+        catch (Exception ex)
+        {
+            _editErrorMessage = $"Не удалось обновить тему: {ex.Message}";
+            StateHasChanged();
+        }
+        finally
+        {
+            _isUpdating = false;
+            StateHasChanged();
         }
     }
 }
