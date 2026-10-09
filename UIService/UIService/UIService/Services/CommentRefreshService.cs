@@ -4,10 +4,10 @@ namespace UIService.Services;
 
 public class CommentRefreshService
 {
-    public event Action? OnCommentChanged;
+    public event Func<Task> OnCommentChanged = () => Task.CompletedTask;
 
-    public void NotifyCommentAdded()
+    public async Task NotifyCommentAdded()
     {
-        OnCommentChanged?.Invoke();
+        await OnCommentChanged();
     }
 }

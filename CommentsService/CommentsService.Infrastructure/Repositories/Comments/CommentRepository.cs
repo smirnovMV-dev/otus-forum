@@ -55,13 +55,38 @@ internal sealed class CommentRepository : ICommentRepository
         }
     }
 
+    public async Task<int> SoftDeleteAsync(
+        long commentId,
+        DateTimeOffset deletedAt,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var comment = await _context.Comments
+                .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+
+            if (comment is null)
+            {
+                return -1;
+            }
+
+            comment.SoftDelete(deletedAt);
+
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return -1;
+        }
+    }
+
     public async Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
         long topicId,
         CancellationToken cancellationToken)
     {
         return (await _context.Comments
             .Where(c => c.TopicId == topicId)
-            .OrderBy(c => c.CreatedAt)
             .ToListAsync(cancellationToken))
             .AsReadOnly();
     }

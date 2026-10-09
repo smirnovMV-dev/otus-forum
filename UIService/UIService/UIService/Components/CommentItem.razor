@@ -73,8 +73,11 @@
             
             @if (isAuthor)
             {
-                <button class="btn btn-sm btn-outline-warning" @onclick="ToggleEdit">
+                <button class="btn btn-sm btn-outline-warning me-2" @onclick="ToggleEdit">
                     <i class="bi bi-pencil me-1"></i>Изменить
+                </button>
+                <button class="btn btn-sm btn-outline-danger" @onclick="DeleteCommentAsync">
+                    <i class="bi bi-trash me-1"></i>Удалить
                 </button>
             }
         }
@@ -242,7 +245,7 @@
             _editMessageType = "alert-success";
 
             // Уведомляем родительский компонент об обновлении
-            CommentRefreshService.NotifyCommentAdded();
+            await CommentRefreshService.NotifyCommentAdded();
         }
         catch (Exception ex)
         {
@@ -291,7 +294,7 @@
             _replyMessageType = "alert-success";
 
             // Уведомляем родительский компонент об обновлении
-            CommentRefreshService.NotifyCommentAdded();
+            await CommentRefreshService.NotifyCommentAdded();
         }
         catch (Exception ex)
         {
@@ -301,6 +304,20 @@
         finally
         {
             _isReplySubmitting = false;
+        }
+    }
+
+    private async Task DeleteCommentAsync()
+    {
+        try
+        {
+            await CommentsClient.DeleteAsync(Comment.Id);
+            await CommentRefreshService.NotifyCommentAdded();
+        }
+        catch (Exception ex)
+        {
+            _replyMessage = $"Не удалось удалить комментарий: {ex.Message}";
+            _replyMessageType = "alert-danger";
         }
     }
 }

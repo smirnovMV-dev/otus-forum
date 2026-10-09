@@ -37,7 +37,7 @@ public sealed class CommentsGrpcService : OtusForum.CommentsService.Grpc.Comment
                 TopicId = comment.TopicId,
                 ParentCommentId = comment.ParentCommentId ?? 0,
                 AuthorId = comment.AuthorId,
-                Content = comment.Content,
+                Content = comment.ContentDisplay,
                 CreatedAt = comment.CreatedAt.ToString("o"),
                 UpdatedAt = comment.UpdatedAt.ToString("o")
             });

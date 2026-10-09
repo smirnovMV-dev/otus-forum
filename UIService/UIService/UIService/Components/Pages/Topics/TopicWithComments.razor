@@ -209,9 +209,9 @@ else
         CommentRefreshService.OnCommentChanged -= OnCommentChanged;
     }
 
-    private void OnCommentChanged()
+    private async Task OnCommentChanged()
     {
-        _ = ReloadCommentsAsync();
+        await ReloadCommentsAsync();
     }
 
     protected override async Task OnInitializedAsync()

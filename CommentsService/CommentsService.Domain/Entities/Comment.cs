@@ -9,9 +9,12 @@ public sealed record Comment
     public long? ParentCommentId { get; private set; }
     public long AuthorId { get; }
     public string Content { get; private set; }
+    public string ContentDisplay => IsDeleted ? "Del" : Content;
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public long? UpdatedByUserId { get; private set; }
+    public bool IsDeleted { get; private set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
 
     public static Comment Create(
         long topicId,
@@ -30,7 +33,12 @@ public sealed record Comment
 
     public long SetId(long id) => Id = id;
 
-    public void Update(long topicId, long? parentCommentId, string content, DateTimeOffset updatedAt, long? updatedByUserId = null)
+    public void Update(
+        long topicId, 
+        long? parentCommentId, 
+        string content, 
+        DateTimeOffset updatedAt, 
+        long? updatedByUserId = null)
     {
         TopicId = topicId;
         ParentCommentId = parentCommentId;
@@ -58,5 +66,18 @@ public sealed record Comment
         AuthorId = authorId;
         Content = content;        
         CreatedAt = createdAt;
+        IsDeleted = false;
+    }
+
+    public void SoftDelete(DateTimeOffset deletedAt)
+    {
+        IsDeleted = true;
+        DeletedAt = deletedAt;
+    }
+
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedAt = null;
     }
 }

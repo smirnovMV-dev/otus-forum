@@ -50,6 +50,15 @@ internal static class CommentEntityToTableMapper
                 .HasColumnName("updated_by_user_id")
                 .HasColumnType("bigint");
 
+            entity.Property(e => e.IsDeleted)
+                .HasColumnName("is_deleted")
+                .HasColumnType("boolean")
+                .IsRequired();
+
+            entity.Property(e => e.DeletedAt)
+                .HasColumnName("deleted_at")
+                .HasColumnType("timestamp with time zone");
+
             entity.HasIndex(e => e.TopicId);
         });
 

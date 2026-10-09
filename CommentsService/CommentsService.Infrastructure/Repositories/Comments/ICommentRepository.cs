@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,11 @@ public interface ICommentRepository
 
     Task<int> UpdateAsync(
         Comment comment,
+        CancellationToken cancellationToken);
+
+    Task<int> SoftDeleteAsync(
+        long commentId,
+        DateTimeOffset deletedAt,
         CancellationToken cancellationToken);
 
     Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(

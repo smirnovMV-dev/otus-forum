@@ -1,6 +1,8 @@
 using CommentsService.API.Models.Comments.CreateComment;
+using CommentsService.API.Models.Comments.DeleteComment;
 using CommentsService.API.Models.Comments.UpdateComment;
 using CommentsService.Application.Comments.CreateComment;
+using CommentsService.Application.Comments.DeleteComment;
 using CommentsService.Application.Comments.UpdateComment;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -51,5 +53,16 @@ public class CommentController : ControllerBase
         await _mediator.Send(command);
 
         return new UpdateCommentResponse();
+    }
+
+    [HttpDelete(nameof(Delete))]
+    public async Task<DeleteCommentResponse> Delete(
+        long id)
+    {
+        var command = new DeleteCommentCommand(id);
+
+        await _mediator.Send(command);
+
+        return new DeleteCommentResponse();
     }
 }
