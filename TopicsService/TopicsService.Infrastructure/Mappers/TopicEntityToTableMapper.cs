@@ -39,6 +39,17 @@ internal static class TopicEntityToTableMapper
                 .HasColumnName(TopicsTable.UpdatedAtName)
                 .HasColumnType("timestamp with time zone")
                 .IsRequired();
+
+            topic.Property(t => t.IsDeleted)
+                .HasColumnName(TopicsTable.IsDeletedName)
+                .HasColumnType("boolean")
+                .IsRequired();
+
+            topic.Property(u => u.DeletedAt)
+                .HasColumnName(TopicsTable.DeletedAtName)
+                .HasColumnType("timestamp with time zone");
+
+            topic.HasIndex(t => new { t.IsDeleted, t.CreatedAt });
         });
 
         return modelBuilder;

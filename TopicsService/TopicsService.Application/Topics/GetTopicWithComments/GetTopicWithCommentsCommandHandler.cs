@@ -1,12 +1,10 @@
 using MediatR;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TopicsService.Application.Services.Externals.CommentsApiService;
-using TopicsService.Application.Services.Externals.CommentsApiService.Models;
 using TopicsService.Application.Services.Externals.UsersApiService;
 using TopicsService.Application.Topics.GetTopicWithComments.Models;
 using TopicsService.Infrastructure.Repositories.Topics;

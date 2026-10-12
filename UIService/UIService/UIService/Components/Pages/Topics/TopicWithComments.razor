@@ -51,8 +51,11 @@ else
                     <div class="d-flex align-items-center gap-2">
                         @if (AuthService.IsAuthenticated && AuthService.UserId == _topicWithComments.AuthorId)
                         {
-                            <button class="btn btn-sm btn-outline-primary" @onclick="ToggleEditModal">
+                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="ToggleEditModal">
                                 <i class="bi bi-pencil me-1"></i>Редактировать
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="ConfirmDeleteTopic">
+                                <i class="bi bi-trash me-1"></i>Удалить
                             </button>
                         }
                         <span class="text-muted small">
@@ -134,6 +137,82 @@ else
         }
     </div>
 
+    @* Модальное окно подтверждения удаления темы *@
+    @if (_showDeleteConfirmModal)
+    {
+        <div class="modal fade show" id="deleteConfirmModal" tabindex="-1" style="display: block; background-color: rgba(0, 0, 0, 0.5);" data-bs-dismiss="modal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Подтверждение удаления
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="CancelDeleteTopic"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Вы уверены, что хотите удалить тему «@(_topicWithComments?.Title)»?</p>
+                        <p class="text-danger"><strong>Это действие нельзя отменить.</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CancelDeleteTopic">
+                            <i class="bi bi-x-circle me-1"></i>Отмена
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="DeleteTopicAsync" disabled="@_isDeleting">
+                            @if (_isDeleting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Удаление...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-trash me-1"></i>
+                                <span>Удалить</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Модальное окно редактирования темы *@
+    @if (_showEditModal)
+    {
+        <div class="modal fade show" id="editTopicModal" tabindex="-1" style="display: block; background-color: rgba(0, 0, 0, 0.5);" data-bs-dismiss="modal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Подтверждение удаления
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="CancelDeleteTopic"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Вы уверены, что хотите удалить тему «@(_topicWithComments?.Title)»?</p>
+                        <p class="text-danger"><strong>Это действие нельзя отменить.</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CancelDeleteTopic">
+                            <i class="bi bi-x-circle me-1"></i>Отмена
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="DeleteTopicAsync" disabled="@_isDeleting">
+                            @if (_isDeleting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Удаление...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-trash me-1"></i>
+                                <span>Удалить</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     @* Модальное окно редактирования темы *@
     @if (_showEditModal)
     {
@@ -198,6 +277,9 @@ else
     private string _editTopicTitle = string.Empty;
     private bool _isUpdating = false;
     private string? _editErrorMessage;
+
+    private bool _showDeleteConfirmModal = false;
+    private bool _isDeleting = false;
 
     protected override void OnInitialized()
     {
@@ -348,7 +430,7 @@ else
                 Title = _editTopicTitle.Trim()
             };
 
-            await TopicsService.TopicAsync(TopicId, AuthService.UserId, request);
+            await TopicsService.TopicPUTAsync(TopicId, AuthService.UserId, request);
 
             _showEditModal = false;
             await LoadTopicWithCommentsAsync();
@@ -361,6 +443,39 @@ else
         finally
         {
             _isUpdating = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDeleteTopic()
+    {
+        _showDeleteConfirmModal = true;
+    }
+
+    private void CancelDeleteTopic()
+    {
+        _showDeleteConfirmModal = false;
+    }
+
+    private async Task DeleteTopicAsync()
+    {
+        _isDeleting = true;
+        _showDeleteConfirmModal = false;
+        StateHasChanged();
+
+        try
+        {
+            await TopicsService.TopicDELETEAsync(TopicId, AuthService.UserId);
+            Navigation.NavigateTo("/topics");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при удалении темы: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Не удалось удалить тему: {ex.Message}");
+        }
+        finally
+        {
+            _isDeleting = false;
             StateHasChanged();
         }
     }

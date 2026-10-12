@@ -2,7 +2,6 @@ using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TopicsService.Domain.Entities;
 using TopicsService.Infrastructure.Repositories.Topics;
 
 namespace TopicsService.Application.Topics.UpdateTopic;

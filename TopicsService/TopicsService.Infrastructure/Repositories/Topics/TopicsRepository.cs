@@ -52,6 +52,7 @@ internal sealed class TopicsRepository : ITopicsRepository
         try
         {
             var results = await _context.Topics
+            .Where(t => !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .Take(count)
             .Select(t => new LatestTopicsDto(

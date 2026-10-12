@@ -14,6 +14,10 @@ public sealed record Topic
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
     public long SetId(long id) => Id = id;
 
     public static Topic Create(
@@ -42,5 +46,11 @@ public sealed record Topic
     {
         Title = newTitle;
         UpdatedAt = updatedAt;
+    }
+
+    public void MarkAsDeleted(DateTimeOffset deletedAt)
+    {
+        IsDeleted = true;
+        DeletedAt = deletedAt;
     }
 }

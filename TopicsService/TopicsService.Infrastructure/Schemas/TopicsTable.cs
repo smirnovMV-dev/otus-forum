@@ -10,4 +10,6 @@ internal static class TopicsTable
     public const string AuthorIdName = "author_id";
     public const string CreatedAtName = "created_at";
     public const string UpdatedAtName = "updated_at";
+    public const string IsDeletedName = "is_deleted";
+    public const string DeletedAtName = "deleted_at";
 }

@@ -7,6 +7,7 @@ using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.API.Models.Topics.GetTopicWithComments;
 using TopicsService.API.Models.Topics.UpdateTopic;
 using TopicsService.Application.Topics.CreateTopic;
+using TopicsService.Application.Topics.DeleteTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
 using TopicsService.Application.Topics.GetTopicWithComments;
 using TopicsService.Application.Topics.UpdateTopic;
@@ -94,5 +95,16 @@ public class TopicController : ControllerBase
 
         await _mediator.Send(command);
         return Ok(new UpdateTopicResponse());
+    }
+
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Delete(
+        long id,
+        [FromHeader(Name = "X-UserId")] long userId)
+    {
+        var command = new DeleteTopicCommand(id, userId);
+
+        await _mediator.Send(command);
+        return Ok();
     }
 }
