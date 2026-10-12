@@ -101,4 +101,26 @@ internal sealed class TopicsRepository : ITopicsRepository
             throw;
         }
     }
+
+    public async Task<int> DeleteBatchAsync(
+        DateTimeOffset cutoffDate,
+        int batchSize,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var deletedCount = await _context.Topics
+                .Where(t => t.IsDeleted && t.DeletedAt.HasValue && t.DeletedAt.Value < cutoffDate)
+                .OrderBy(t => t.DeletedAt)
+                .Take(batchSize)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            return deletedCount;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при пакетном удалении тем до {CutoffDate}", cutoffDate);
+            throw;
+        }
+    }
 }

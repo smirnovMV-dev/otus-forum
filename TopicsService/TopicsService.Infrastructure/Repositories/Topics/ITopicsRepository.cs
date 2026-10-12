@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,5 +23,10 @@ public interface ITopicsRepository
 
     Task UpdateAsync(
         Topic topic,
+        CancellationToken cancellationToken);
+
+    Task<int> DeleteBatchAsync(
+        DateTimeOffset cutoffDate,
+        int batchSize,
         CancellationToken cancellationToken);
 }
