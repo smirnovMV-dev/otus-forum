@@ -46,20 +46,20 @@ public class TopicController : ControllerBase
     public async Task<GetLatestTopicsResponse> GetLatest(
         [FromBody] GetLatestTopicsRequest request)
     {
-        var command = new GetLatestTopicsCommand();
+        var command = new GetLatestTopicsCommand(request.Page, request.PageSize);
 
         var results = await _mediator.Send(command);
 
         return new GetLatestTopicsResponse
         {
-            LatestTopics = [.. results.Select(r => new LatestTopicsResponse
+            LatestTopics = [.. results.Topics.Select(r => new LatestTopicsResponse
             {
                 Id = r.Id,
                 Title = r.Title,
                 AuthorNikname = r.AuthorNikname,
                 CreatedAt = r.CreatedAt
-            }
-            )],
+            })],
+            TotalCount = results.TotalCount
         };
     }
 

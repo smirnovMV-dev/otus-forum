@@ -10,13 +10,13 @@ using TopicsService.Infrastructure.Repositories.Topics;
 namespace TopicsService.Application.Topics.GetLatestTopics;
 
 public sealed record GetLatestTopicsCommand(
-    ) : IRequest<IReadOnlyCollection<GetLatestTopicsResult>>;
+    int Page,
+    int PageSize
+) : IRequest<GetLatestTopicsResult>;
 
 internal sealed class GetLatestTopicsCommandHandler
-    : IRequestHandler<GetLatestTopicsCommand, IReadOnlyCollection<GetLatestTopicsResult>>
+    : IRequestHandler<GetLatestTopicsCommand, GetLatestTopicsResult>
 {
-    private const int LatestTopicsCount = 5;
-
     private readonly ITopicsRepository _topicsRepository;
     private readonly IUsersApiServiceAdapter _usersApiServiceAdapter;
 
@@ -28,31 +28,36 @@ internal sealed class GetLatestTopicsCommandHandler
         _usersApiServiceAdapter = usersApiServiceAdapter;
     }
 
-    public async Task<IReadOnlyCollection<GetLatestTopicsResult>> Handle(
+    public async Task<GetLatestTopicsResult> Handle(
         GetLatestTopicsCommand command, 
         CancellationToken cancellationToken)
     {
-        var topics = await _topicsRepository.GetLatestTopicsAsync(
-            LatestTopicsCount,
+        var pagedResult = await _topicsRepository.GetLatestTopicsAsync(
+            command.Page,
+            command.PageSize,
             cancellationToken);
 
-        var authorIds = topics.Select(t => t.AuthorId).ToHashSet();
+        var authorIds = pagedResult.Topics.Select(t => t.AuthorId).ToHashSet();
 
         var authorsNicknames = await _usersApiServiceAdapter.GetUsersNicknamesAsync(
             authorIds,
             cancellationToken);
 
-        return [.. topics.Select(topic =>
+        var topics = pagedResult.Topics.Select(topic =>
         {
             var authorNickname = authorsNicknames.TryGetValue(topic.AuthorId, out var authorNicknameVal)
-            ? authorNicknameVal.Nickname
-            : "Неизвестный пользователь";
+                ? authorNicknameVal.Nickname
+                : "Неизвестный пользователь";
 
-            return new GetLatestTopicsResult(
+            return new GetLatestTopicsItem(
                 topic.Id,
                 topic.Title,
                 authorNickname,
                 topic.CreatedAt);
-        })];
+        });
+
+        return new GetLatestTopicsResult(
+            [.. topics],
+            pagedResult.TotalCount);
     }
 }

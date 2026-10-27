@@ -784,6 +784,14 @@ namespace OtusForum.UI.Clients.Topics
     public partial class GetLatestTopicsRequest
     {
 
+        [System.Text.Json.Serialization.JsonPropertyName("page")]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
+        public int Page { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
+        public int PageSize { get; set; }
+
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
         [System.Text.Json.Serialization.JsonExtensionData]
@@ -802,6 +810,11 @@ namespace OtusForum.UI.Clients.Topics
         [System.Text.Json.Serialization.JsonPropertyName("latestTopics")]
         [System.ComponentModel.DataAnnotations.Required]
         public System.Collections.Generic.ICollection<LatestTopicsResponse> LatestTopics { get; set; } = new System.Collections.ObjectModel.Collection<LatestTopicsResponse>();
+
+        [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
+        public int TotalCount { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

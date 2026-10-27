@@ -101,6 +101,28 @@
                     </div>
                 }
             </div>
+
+            @if (TotalPages > 1)
+            {
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage - 1)">Назад</a>
+                        </li>
+                        @for (var i = 1; i <= TotalPages; i++)
+                        {
+                            var pageNumber = i;
+                            <li class="page-item @(pageNumber == _currentPage ? "active" : "")">
+                                <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(pageNumber)">@pageNumber</a>
+                            </li>
+                        }
+                        <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage + 1)">Вперёд</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+
             <div class="text-center mt-4">
                 <a href="/topics" class="btn btn-outline-primary">
                     Смотреть все темы <i class="bi bi-arrow-right ms-1"></i>
@@ -171,17 +193,53 @@
     private bool loading = true;
     private string? error;
 
+    private int _currentPage = 1;
+    private int _pageSize = 3;
+    private int _totalTopicsCount = 0;
+
     [Inject] private ITopicsClient TopicsClient { get; set; } = default!;
     [Inject] private IUsersClient UsersClient { get; set; } = default!;
+
+    private int TotalPages => _pageSize > 0 ? (int)Math.Ceiling(_totalTopicsCount / (double)_pageSize) : 0;
+
+    private async Task LoadTopicsAsync(int page)
+    {
+        try
+        {
+            var request = new GetLatestTopicsRequest { Page = page, PageSize = _pageSize };
+            var topicsResponse = await TopicsClient.GetLatestAsync(request);
+            latestTopics = topicsResponse.LatestTopics.ToList();
+            _totalTopicsCount = topicsResponse.TotalCount;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnPageChangedAsync(int page)
+    {
+        var totalPages = TotalPages;
+        if (totalPages > 0)
+        {
+            _currentPage = Math.Max(1, Math.Min(page, totalPages));
+        }
+        else
+        {
+            _currentPage = 1;
+        }
+        await LoadTopicsAsync(_currentPage);
+    }
 
     private async Task LoadDataAsync()
     {
         try
         {
             // Загружаем последние темы
-            var topicsResponse = await TopicsClient.GetLatestAsync(new GetLatestTopicsRequest());
-            latestTopics = topicsResponse.LatestTopics.ToList();
-            topicCount = latestTopics.Count;
+            await LoadTopicsAsync(1);
+            topicCount = _totalTopicsCount;
 
             // Загружаем реальное количество пользователей
             userCount = await UsersClient.CountUsersAsync();

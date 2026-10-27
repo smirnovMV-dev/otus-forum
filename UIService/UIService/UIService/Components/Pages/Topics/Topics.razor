@@ -39,7 +39,7 @@ else
             <tbody>
                 @foreach (var topic in _latestTopics)
                 {
-                    <tr>
+                    <tr key="@topic.Id">
                         <td>
                             <a href="/topics/@topic.Id" class="fw-bold text-decoration-none text-dark">
                                 @topic.Title
@@ -56,25 +56,64 @@ else
             </tbody>
         </table>
     </div>
+
+    @if (TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage - 1)">Назад</a>
+                </li>
+                @for (var i = 1; i <= TotalPages; i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(pageNumber == _currentPage ? "active" : "")">
+                        <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(pageNumber)">@pageNumber</a>
+                    </li>
+                }
+                <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage + 1)">Вперёд</a>
+                </li>
+            </ul>
+        </nav>
+    }
 }
 
 @code {
     private IReadOnlyCollection<LatestTopicsResponse>? _latestTopics;
+    private int _currentPage = 1;
+    private int _pageSize = 10;
+    private int _totalTopicsCount = 0;
 
-    protected override async Task OnInitializedAsync()
+    private int TotalPages => _pageSize > 0 ? (int)Math.Ceiling(_totalTopicsCount / (double)_pageSize) : 0;
+
+    private async Task LoadTopicsAsync(int page)
     {
         try
         {
-
-            var request = new GetLatestTopicsRequest();
-            GetLatestTopicsResponse response = await TopicsService.GetLatestAsync(request);
+            var request = new GetLatestTopicsRequest { Page = page, PageSize = _pageSize };
+            var response = await TopicsService.GetLatestAsync(request);
 
             _latestTopics = response.LatestTopics.ToArray();
+            _totalTopicsCount = response.TotalCount;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка при получении списка тем: {ex.Message}");
             _latestTopics = Array.Empty<LatestTopicsResponse>();
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private async Task OnPageChangedAsync(int page)
+    {
+        _currentPage = page;
+        await LoadTopicsAsync(page);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTopicsAsync(1);
     }
 }

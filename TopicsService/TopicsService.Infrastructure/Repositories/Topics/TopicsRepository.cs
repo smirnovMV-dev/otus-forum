@@ -40,34 +40,39 @@ internal sealed class TopicsRepository : ITopicsRepository
         }
     }
 
-    public async Task<IReadOnlyCollection<LatestTopicsModel>> GetLatestTopicsAsync(
-        int count,
+    public async Task<LatestTopicsPagedResult> GetLatestTopicsAsync(
+        int page,
+        int pageSize,
         CancellationToken cancellationToken)
     {
-        if (count == 0)
+        if (pageSize <= 0)
         {
-            return [];
+            return new LatestTopicsPagedResult([], 0);
         }
 
         try
         {
-            var results = await _context.Topics
-            .Where(t => !t.IsDeleted)
-            .OrderByDescending(t => t.CreatedAt)
-            .Take(count)
-            .Select(t => new LatestTopicsDto(
-                t.Id,
-                t.Title,
-                t.AuthorId,
-                t.CreatedAt))
-            .ToListAsync(cancellationToken);
+            var totalCount = await _context.Topics
+                .CountAsync(t => !t.IsDeleted, cancellationToken);
 
-            return [.. results.Select(LatestTopicsModel.Create)];
+            var results = await _context.Topics
+                .Where(t => !t.IsDeleted)
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new LatestTopicsDto(
+                    t.Id,
+                    t.Title,
+                    t.AuthorId,
+                    t.CreatedAt))
+                .ToListAsync(cancellationToken);
+
+            return new LatestTopicsPagedResult([.. results], totalCount);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
-            return [];
+            _logger.LogError(ex, "Ошибка при получении списка тем");
+            return new LatestTopicsPagedResult([], 0);
         }
     }
 
