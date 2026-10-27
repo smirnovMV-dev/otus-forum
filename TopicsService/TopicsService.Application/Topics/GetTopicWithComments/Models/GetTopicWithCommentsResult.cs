@@ -8,7 +8,9 @@ public sealed record GetTopicWithCommentsResult(
     string Title,
     long AuthorId,
     DateTimeOffset CreatedAt,
-    IReadOnlyCollection<CommentResult> Comments);
+    IReadOnlyCollection<CommentResult> Comments,
+    bool CanEdit,
+    bool CanDelete);
 
 public sealed record CommentResult(
     long Id,

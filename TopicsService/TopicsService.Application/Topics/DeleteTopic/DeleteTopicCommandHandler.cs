@@ -25,7 +25,11 @@ internal sealed class DeleteTopicCommandHandler : IRequestHandler<DeleteTopicCom
             throw new Exception($"Тема с ID {command.TopicId} не найдена.");
         }
 
-        if (topic.AuthorId != command.AuthorId)
+        var canDelete = topic.AuthorId == command.AuthorId
+            || command.isAdmin
+            || command.isModerator;
+
+        if (!canDelete)
         {
             throw new Exception("У вас нет прав для удаления этой темы.");
         }

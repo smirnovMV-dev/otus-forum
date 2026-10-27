@@ -101,7 +101,7 @@
             var response = await UsersService.LoginAsync(request);
 
             // Сохраняем данные пользователя
-            await AuthService.SetUserAsync(response.UserId, response.Token, response.Nickname);
+            await AuthService.SetUserAsync(response.UserId, response.Token, response.Nickname, response.IsAdmin, response.IsModerator);
 
             _successMessage = $"Добро пожаловать, @{response.Nickname}!";
             StateHasChanged();

@@ -25,7 +25,11 @@ internal sealed class UpdateTopicCommandHandler : IRequestHandler<UpdateTopicCom
             throw new Exception($"Тема с ID {command.TopicId} не найдена.");
         }
 
-        if (topic.AuthorId != command.AuthorId)
+        var canEdit = topic.AuthorId == command.AuthorId 
+            || command.isAdmin 
+            || command.isModerator;
+
+        if (!canEdit)
         {
             throw new Exception("У вас нет прав для редактирования этой темы.");
         }

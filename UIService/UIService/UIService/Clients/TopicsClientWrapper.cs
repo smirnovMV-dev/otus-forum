@@ -26,11 +26,11 @@ public class TopicsClientWrapper : ITopicsClient
     public Task<GetLatestTopicsResponse> GetLatestAsync(GetLatestTopicsRequest body, CancellationToken cancellationToken)
         => _inner.GetLatestAsync(body, cancellationToken);
 
-    public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id)
-        => _inner.WithCommentsAsync(id);
+    public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator)
+        => _inner.WithCommentsAsync(id, x_UserId, x_IsAdmin, x_IsModerator);
 
-    public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, CancellationToken cancellationToken)
-        => _inner.WithCommentsAsync(id, cancellationToken);
+    public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CancellationToken cancellationToken)
+        => _inner.WithCommentsAsync(id, x_UserId, x_IsAdmin, x_IsModerator, cancellationToken);
 
     public Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body)
         => _inner.TopicPUTAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body);

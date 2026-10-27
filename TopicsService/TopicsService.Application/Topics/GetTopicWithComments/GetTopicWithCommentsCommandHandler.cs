@@ -56,11 +56,16 @@ internal sealed class GetTopicWithCommentsCommandHandler
             c.Content,
             c.CreatedAt)).ToList();
 
+        var canEdit = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
+        var canDelete = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
+
         return new GetTopicWithCommentsResult(
             topic.Id,
             topic.Title,
             topic.AuthorId,
             topic.CreatedAt,
-            commentDtos);
+            commentDtos,
+            canEdit,
+            canDelete);
     }
 }

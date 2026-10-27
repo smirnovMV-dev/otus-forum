@@ -873,6 +873,12 @@ namespace OtusForum.UI.Clients.Users
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public string Nickname { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("isAdmin")]
+        public bool IsAdmin { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("isModerator")]
+        public bool IsModerator { get; set; }
+
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
         [System.Text.Json.Serialization.JsonExtensionData]

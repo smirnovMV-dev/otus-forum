@@ -10,6 +10,8 @@ public sealed class GetTopicWithCommentsResponse
     public required long AuthorId { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
     public required IReadOnlyCollection<CommentResponse> Comments { get; set; }
+    public bool CanEdit { get; set; }
+    public bool CanDelete { get; set; }
 }
 
 public sealed class CommentResponse

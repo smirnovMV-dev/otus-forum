@@ -49,11 +49,14 @@ else
                         Автор: @(_topicWithComments.AuthorId)
                     </span>
                     <div class="d-flex align-items-center gap-2">
-                        @if (AuthService.IsAuthenticated && AuthService.UserId == _topicWithComments.AuthorId)
+                        @if (_topicWithComments?.CanEdit == true)
                         {
                             <button class="btn btn-sm btn-outline-primary me-2" @onclick="ToggleEditModal">
                                 <i class="bi bi-pencil me-1"></i>Редактировать
                             </button>
+                        }
+                        @if (_topicWithComments?.CanDelete == true)
+                        {
                             <button class="btn btn-sm btn-outline-danger" @onclick="ConfirmDeleteTopic">
                                 <i class="bi bi-trash me-1"></i>Удалить
                             </button>
@@ -181,44 +184,6 @@ else
         <div class="modal fade show" id="editTopicModal" tabindex="-1" style="display: block; background-color: rgba(0, 0, 0, 0.5);" data-bs-dismiss="modal">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content shadow">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">
-                            <i class="bi bi-exclamation-triangle me-2"></i>Подтверждение удаления
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" @onclick="CancelDeleteTopic"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Вы уверены, что хотите удалить тему «@(_topicWithComments?.Title)»?</p>
-                        <p class="text-danger"><strong>Это действие нельзя отменить.</strong></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CancelDeleteTopic">
-                            <i class="bi bi-x-circle me-1"></i>Отмена
-                        </button>
-                        <button type="button" class="btn btn-danger" @onclick="DeleteTopicAsync" disabled="@_isDeleting">
-                            @if (_isDeleting)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                <span>Удаление...</span>
-                            }
-                            else
-                            {
-                                <i class="bi bi-trash me-1"></i>
-                                <span>Удалить</span>
-                            }
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-
-    @* Модальное окно редактирования темы *@
-    @if (_showEditModal)
-    {
-        <div class="modal fade show" id="editTopicModal" tabindex="-1" style="display: block; background-color: rgba(0, 0, 0, 0.5);" data-bs-dismiss="modal">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content shadow">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">
                             <i class="bi bi-pencil-square me-2"></i>Редактирование темы
@@ -298,12 +263,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTopicWithCommentsAsync();
+        _isLoading = true;
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        await LoadTopicWithCommentsAsync();
+        _isLoading = true;
+        _initialized = false;
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -312,6 +279,7 @@ else
         {
             await AuthService.InitializeAsync(JSRuntime);
             _initialized = true;
+            await LoadTopicWithCommentsAsync();
             StateHasChanged();
         }
     }
@@ -320,7 +288,11 @@ else
     {
         try
         {
-            _topicWithComments = await TopicsService.WithCommentsAsync(TopicId);
+            _topicWithComments = await TopicsService.WithCommentsAsync(
+                TopicId,
+                AuthService.UserId,
+                AuthService.IsAdmin,
+                AuthService.IsModerator);
         }
         catch (Exception ex)
         {

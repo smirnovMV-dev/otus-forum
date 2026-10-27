@@ -48,6 +48,9 @@ internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand
 
         var token = _jwtTokenGenerator.GenerateToken(user, accessLevels);
 
-        return new LoginUserResponse(token, user.Id, user.Nickname);
+        var isAdmin = accessLevels.Contains(AccessLevel.Admin);
+        var isModerator = accessLevels.Contains(AccessLevel.Moderator);
+
+        return new LoginUserResponse(token, user.Id, user.Nickname, isAdmin, isModerator);
     }
 }

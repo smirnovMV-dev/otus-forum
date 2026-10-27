@@ -64,9 +64,13 @@ public class TopicController : ControllerBase
     }
 
     [HttpGet("{id:long}/with-comments")]
-    public async Task<GetTopicWithCommentsResponse> GetWithComments(long id)
+    public async Task<GetTopicWithCommentsResponse> GetWithComments(
+        long id,
+        [FromHeader(Name = "X-UserId")] long userId = 0,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
+        [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
     {
-        var result = await _mediator.Send(new GetTopicWithCommentsCommand(id));
+        var result = await _mediator.Send(new GetTopicWithCommentsCommand(id, userId, isAdmin, isModerator));
 
         return new GetTopicWithCommentsResponse
         {
@@ -82,7 +86,9 @@ public class TopicController : ControllerBase
                 AuthorNickname = c.AuthorNickname,
                 Content = c.Content,
                 CreatedAt = c.CreatedAt
-            })]
+            })],
+            CanEdit = result.CanEdit,
+            CanDelete = result.CanDelete
         };
     }
 

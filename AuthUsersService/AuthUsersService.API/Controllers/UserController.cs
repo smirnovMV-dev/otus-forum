@@ -61,7 +61,9 @@ public sealed class UserController : ControllerBase
         {
             Token = result.Token,
             UserId = result.UserId,
-            Nickname = result.Nickname
+            Nickname = result.Nickname,
+            IsAdmin = result.IsAdmin,
+            IsModerator = result.IsModerator
         };
     }
 
