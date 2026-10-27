@@ -22,4 +22,8 @@ public interface IUserRepository
 
     Task<int> CountAsync(
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<string>> GetUserRoleNamesAsync(
+        long userId,
+        CancellationToken cancellationToken);
 }

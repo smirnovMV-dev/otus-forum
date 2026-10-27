@@ -76,8 +76,8 @@
                 Title = _formModel.Title
             };
 
-            // Пробрасываем userId в заголовке X-UserId
-            await TopicsService.CreateAsync(AuthService.UserId, request);
+            // Пробрасываем userId и роли в заголовках X-UserId, X-IsAdmin, X-IsModerator
+            await TopicsService.CreateAsync(AuthService.UserId, AuthService.IsAdmin, AuthService.IsModerator, request);
 
             // Редирект на список тем после успешного сохранения
             Navigation.NavigateTo("/topics");

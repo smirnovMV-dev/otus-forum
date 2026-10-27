@@ -9,7 +9,9 @@ namespace TopicsService.Application.Topics.CreateTopic;
 
 public sealed record CreateTopicCommand(
     string Title,
-    long AuthorId) : IRequest<int>;
+    long AuthorId,
+    bool isAdmin,
+    bool isModerator) : IRequest<int>;
 
 internal class CreateTopicCommandHandler : IRequestHandler<CreateTopicCommand, int>
 {

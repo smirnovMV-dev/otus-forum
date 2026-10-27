@@ -28,11 +28,15 @@ public class TopicController : ControllerBase
     [HttpPost(nameof(Create))]
     public async Task<CreateTopicResponse> Create(
         [FromBody] CreateTopicRequest request,
-        [FromHeader(Name = "X-UserId")] long userId)
+        [FromHeader(Name = "X-UserId")] long userId,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
+        [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
     {
         var command = new CreateTopicCommand(
             request.Title,
-            userId);
+            userId,
+            isAdmin,
+            isModerator);
 
         var result = await _mediator.Send(command);
         return new CreateTopicResponse();
@@ -86,12 +90,16 @@ public class TopicController : ControllerBase
     public async Task<IActionResult> Update(
         long id,
         [FromBody] UpdateTopicRequest request,
-        [FromHeader(Name = "X-UserId")] long userId)
+        [FromHeader(Name = "X-UserId")] long userId,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
+        [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
     {
         var command = new UpdateTopicCommand(
             id,
             request.Title,
-            userId);
+            userId,
+            isAdmin,
+            isModerator);
 
         await _mediator.Send(command);
         return Ok(new UpdateTopicResponse());
@@ -100,9 +108,11 @@ public class TopicController : ControllerBase
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Delete(
         long id,
-        [FromHeader(Name = "X-UserId")] long userId)
+        [FromHeader(Name = "X-UserId")] long userId,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
+        [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
     {
-        var command = new DeleteTopicCommand(id, userId);
+        var command = new DeleteTopicCommand(id, userId, isAdmin, isModerator);
 
         await _mediator.Send(command);
         return Ok();

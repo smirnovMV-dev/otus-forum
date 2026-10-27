@@ -29,21 +29,21 @@ namespace OtusForum.UI.Clients.Comments
     {
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, CreateCommentRequest body);
+        System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateCommentRequest body);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, CreateCommentRequest body, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateCommentRequest body, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body);
+        System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateCommentRequest body);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateCommentRequest body, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -106,15 +106,15 @@ namespace OtusForum.UI.Clients.Comments
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, CreateCommentRequest body)
+        public virtual System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateCommentRequest body)
         {
-            return CreateAsync(x_UserId, body, System.Threading.CancellationToken.None);
+            return CreateAsync(x_UserId, x_IsAdmin, x_IsModerator, body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, CreateCommentRequest body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<CreateCommentResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateCommentRequest body, System.Threading.CancellationToken cancellationToken)
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -128,6 +128,12 @@ namespace OtusForum.UI.Clients.Comments
 
                     if (x_UserId != null)
                         request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsAdmin != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsAdmin", ConvertToString(x_IsAdmin, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsModerator != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsModerator", ConvertToString(x_IsModerator, System.Globalization.CultureInfo.InvariantCulture));
                     var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
                     var content_ = new System.Net.Http.ByteArrayContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
@@ -194,15 +200,15 @@ namespace OtusForum.UI.Clients.Comments
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body)
+        public virtual System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateCommentRequest body)
         {
-            return UpdateAsync(id, x_UserId, body, System.Threading.CancellationToken.None);
+            return UpdateAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateCommentRequest body, System.Threading.CancellationToken cancellationToken)
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -216,6 +222,12 @@ namespace OtusForum.UI.Clients.Comments
 
                     if (x_UserId != null)
                         request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsAdmin != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsAdmin", ConvertToString(x_IsAdmin, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsModerator != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsModerator", ConvertToString(x_IsModerator, System.Globalization.CultureInfo.InvariantCulture));
                     var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
                     var content_ = new System.Net.Http.ByteArrayContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");

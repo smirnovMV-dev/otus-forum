@@ -11,7 +11,9 @@ public sealed record CreateCommentCommand(
     long TopicId,
     long? ParentCommentId,
     long AuthorId,
-    string Content) : IRequest<int>;
+    string Content,
+    bool isAdmin,
+    bool isModerator) : IRequest<int>;
 
 internal sealed class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand, int>
 {

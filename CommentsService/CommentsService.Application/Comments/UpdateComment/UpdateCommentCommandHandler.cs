@@ -12,7 +12,9 @@ public sealed record UpdateCommentCommand(
     long TopicId,
     long? ParentCommentId,
     long UpdatedByUserId,
-    string Content) : IRequest<int>;
+    string Content,
+    bool isAdmin,
+    bool isModerator) : IRequest<int>;
 
 internal sealed class UpdateCommentCommandHandler : IRequestHandler<UpdateCommentCommand, int>
 {

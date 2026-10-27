@@ -1,9 +1,12 @@
 using AuthUsersService.Application.Auth.Models;
+using AuthUsersService.Domain;
 using AuthUsersService.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -18,7 +21,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         _configuration = configuration;
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(User user, IReadOnlyCollection<AccessLevel> accessLevels)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var signingKey = jwtSettings["SigningKey"] ?? throw new InvalidOperationException("JWT SigningKey not configured.");
@@ -29,12 +32,17 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+        var isAdmin = accessLevels.Contains(AccessLevel.Admin);
+        var isModerator = accessLevels.Contains(AccessLevel.Moderator);
+
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Nickname),
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("IsAdmin", isAdmin.ToString().ToLowerInvariant()),
+            new Claim("IsModerator", isModerator.ToString().ToLowerInvariant())
         };
 
         var token = new JwtSecurityToken(

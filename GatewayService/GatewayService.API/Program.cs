@@ -53,6 +53,18 @@ app.Use(async (context, next) =>
         {
             context.Request.Headers["X-UserId"] = userIdClaim.Value;
         }
+
+        var isAdminClaim = context.User.FindFirst("IsAdmin");
+        if (isAdminClaim != null)
+        {
+            context.Request.Headers["X-IsAdmin"] = isAdminClaim.Value;
+        }
+
+        var isModeratorClaim = context.User.FindFirst("IsModerator");
+        if (isModeratorClaim != null)
+        {
+            context.Request.Headers["X-IsModerator"] = isModeratorClaim.Value;
+        }
     }
 
     await next.Invoke();

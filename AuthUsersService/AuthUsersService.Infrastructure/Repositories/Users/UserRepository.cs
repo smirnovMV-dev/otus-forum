@@ -86,4 +86,18 @@ internal sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .CountAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyCollection<string>> GetUserRoleNamesAsync(
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(
+                _context.Roles,
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (userRole, role) => role.Name)
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -10,7 +10,8 @@ internal sealed class UpdateTopicCommandHandler : IRequestHandler<UpdateTopicCom
 {
     private readonly ITopicsRepository _topicsRepository;
 
-    public UpdateTopicCommandHandler(ITopicsRepository topicsRepository)
+    public UpdateTopicCommandHandler(
+        ITopicsRepository topicsRepository)
     {
         _topicsRepository = topicsRepository;
     }

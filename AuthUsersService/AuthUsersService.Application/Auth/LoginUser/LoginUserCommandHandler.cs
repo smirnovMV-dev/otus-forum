@@ -1,9 +1,12 @@
 using AuthUsersService.Application.Auth.Models;
 using AuthUsersService.Application.Auth.LoginUser.Models;
+using AuthUsersService.Domain;
 using AuthUsersService.Domain.Entities;
 using AuthUsersService.Infrastructure.Repositories.Users;
 using MediatR;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,7 +40,13 @@ internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand
             throw new UnauthorizedAccessException("Неверный email или пароль.");
         }
 
-        var token = _jwtTokenGenerator.GenerateToken(user);
+        var roleNames = await _userRepository.GetUserRoleNamesAsync(user.Id, cancellationToken);
+        var accessLevels = roleNames
+            .Select(AccessLevelMapping.FromName)
+            .Distinct()
+            .ToList();
+
+        var token = _jwtTokenGenerator.GenerateToken(user, accessLevels);
 
         return new LoginUserResponse(token, user.Id, user.Nickname);
     }

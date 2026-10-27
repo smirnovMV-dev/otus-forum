@@ -14,11 +14,11 @@ public class TopicsClientWrapper : ITopicsClient
         _inner = new TopicsClient(httpClient) { BaseUrl = apiUrl.TrimEnd('/') };
     }
 
-    public Task<CreateTopicResponse> CreateAsync(long? userId, CreateTopicRequest body)
-        => _inner.CreateAsync(userId, body);
+    public Task<CreateTopicResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateTopicRequest body)
+        => _inner.CreateAsync(x_UserId, x_IsAdmin, x_IsModerator, body);
 
-    public Task<CreateTopicResponse> CreateAsync(long? userId, CreateTopicRequest body, CancellationToken cancellationToken)
-        => _inner.CreateAsync(userId, body, cancellationToken);
+    public Task<CreateTopicResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateTopicRequest body, CancellationToken cancellationToken)
+        => _inner.CreateAsync(x_UserId, x_IsAdmin, x_IsModerator, body, cancellationToken);
 
     public Task<GetLatestTopicsResponse> GetLatestAsync(GetLatestTopicsRequest body)
         => _inner.GetLatestAsync(body);
@@ -32,15 +32,15 @@ public class TopicsClientWrapper : ITopicsClient
     public Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, CancellationToken cancellationToken)
         => _inner.WithCommentsAsync(id, cancellationToken);
 
-    public Task TopicPUTAsync(long id, long? userId, UpdateTopicRequest body)
-        => _inner.TopicPUTAsync(id, userId, body);
+    public Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body)
+        => _inner.TopicPUTAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body);
 
-    public Task TopicPUTAsync(long id, long? userId, UpdateTopicRequest body, CancellationToken cancellationToken)
-        => _inner.TopicPUTAsync(id, userId, body, cancellationToken);
+    public Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body, CancellationToken cancellationToken)
+        => _inner.TopicPUTAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body, cancellationToken);
 
-    public Task TopicDELETEAsync(long id, long? userId)
-        => _inner.TopicDELETEAsync(id, userId);
+    public Task TopicDELETEAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator)
+        => _inner.TopicDELETEAsync(id, x_UserId, x_IsAdmin, x_IsModerator);
 
-    public Task TopicDELETEAsync(long id, long? userId, CancellationToken cancellationToken)
-        => _inner.TopicDELETEAsync(id, userId, cancellationToken);
+    public Task TopicDELETEAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CancellationToken cancellationToken)
+        => _inner.TopicDELETEAsync(id, x_UserId, x_IsAdmin, x_IsModerator, cancellationToken);
 }

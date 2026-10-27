@@ -366,7 +366,7 @@ else
                 Content = _commentContent.Trim()
             };
 
-            await CommentsClient.CreateAsync(AuthService.UserId, request);
+            await CommentsClient.CreateAsync(AuthService.UserId, AuthService.IsAdmin, AuthService.IsModerator, request);
 
             _commentContent = string.Empty;
             _submitMessage = "Комментарий успешно добавлен!";
@@ -430,7 +430,7 @@ else
                 Title = _editTopicTitle.Trim()
             };
 
-            await TopicsService.TopicPUTAsync(TopicId, AuthService.UserId, request);
+            await TopicsService.TopicPUTAsync(TopicId, AuthService.UserId, AuthService.IsAdmin, AuthService.IsModerator, request);
 
             _showEditModal = false;
             await LoadTopicWithCommentsAsync();
@@ -465,7 +465,7 @@ else
 
         try
         {
-            await TopicsService.TopicDELETEAsync(TopicId, AuthService.UserId);
+            await TopicsService.TopicDELETEAsync(TopicId, AuthService.UserId, AuthService.IsAdmin, AuthService.IsModerator);
             Navigation.NavigateTo("/topics");
         }
         catch (Exception ex)

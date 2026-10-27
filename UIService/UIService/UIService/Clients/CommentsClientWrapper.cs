@@ -13,17 +13,17 @@ public class CommentsClientWrapper : ICommentsClient
         _inner = new CommentsClient(httpClient) { BaseUrl = apiUrl.TrimEnd('/') };
     }
 
-    public Task<CreateCommentResponse> CreateAsync(long? userId, CreateCommentRequest body)
-        => _inner.CreateAsync(userId, body);
+    public Task<CreateCommentResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateCommentRequest body)
+        => _inner.CreateAsync(x_UserId, x_IsAdmin, x_IsModerator, body);
 
-    public Task<CreateCommentResponse> CreateAsync(long? userId, CreateCommentRequest body, CancellationToken cancellationToken)
-        => _inner.CreateAsync(userId, body, cancellationToken);
+    public Task<CreateCommentResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateCommentRequest body, CancellationToken cancellationToken)
+        => _inner.CreateAsync(x_UserId, x_IsAdmin, x_IsModerator, body, cancellationToken);
 
-    public Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body)
-        => _inner.UpdateAsync(id, x_UserId, body);
+    public Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateCommentRequest body)
+        => _inner.UpdateAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body);
 
-    public Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, UpdateCommentRequest body, CancellationToken cancellationToken)
-        => _inner.UpdateAsync(id, x_UserId, body, cancellationToken);
+    public Task<UpdateCommentResponse> UpdateAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateCommentRequest body, CancellationToken cancellationToken)
+        => _inner.UpdateAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body, cancellationToken);
 
     public Task<DeleteCommentResponse> DeleteAsync(long? id)
         => _inner.DeleteAsync(id);

@@ -29,12 +29,12 @@ namespace OtusForum.UI.Clients.Topics
     {
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body);
+        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateTopicRequest body);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateTopicRequest body, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -56,21 +56,21 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, UpdateTopicRequest body);
+        System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, UpdateTopicRequest body, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId);
+        System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken);
 
     }
 
@@ -124,15 +124,15 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body)
+        public virtual System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateTopicRequest body)
         {
-            return CreateAsync(x_UserId, body, System.Threading.CancellationToken.None);
+            return CreateAsync(x_UserId, x_IsAdmin, x_IsModerator, body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, CreateTopicRequest body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<CreateTopicResponse> CreateAsync(long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, CreateTopicRequest body, System.Threading.CancellationToken cancellationToken)
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -146,6 +146,12 @@ namespace OtusForum.UI.Clients.Topics
 
                     if (x_UserId != null)
                         request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsAdmin != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsAdmin", ConvertToString(x_IsAdmin, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsModerator != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsModerator", ConvertToString(x_IsModerator, System.Globalization.CultureInfo.InvariantCulture));
                     var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
                     var content_ = new System.Net.Http.ByteArrayContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
@@ -380,15 +386,15 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, UpdateTopicRequest body)
+        public virtual System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body)
         {
-            return TopicPUTAsync(id, x_UserId, body, System.Threading.CancellationToken.None);
+            return TopicPUTAsync(id, x_UserId, x_IsAdmin, x_IsModerator, body, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, UpdateTopicRequest body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task TopicPUTAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, UpdateTopicRequest body, System.Threading.CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new System.ArgumentNullException("id");
@@ -405,6 +411,12 @@ namespace OtusForum.UI.Clients.Topics
 
                     if (x_UserId != null)
                         request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsAdmin != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsAdmin", ConvertToString(x_IsAdmin, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsModerator != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsModerator", ConvertToString(x_IsModerator, System.Globalization.CultureInfo.InvariantCulture));
                     var json_ = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(body, JsonSerializerSettings);
                     var content_ = new System.Net.Http.ByteArrayContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
@@ -466,15 +478,15 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId)
+        public virtual System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator)
         {
-            return TopicDELETEAsync(id, x_UserId, System.Threading.CancellationToken.None);
+            return TopicDELETEAsync(id, x_UserId, x_IsAdmin, x_IsModerator, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task TopicDELETEAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new System.ArgumentNullException("id");
@@ -488,6 +500,12 @@ namespace OtusForum.UI.Clients.Topics
 
                     if (x_UserId != null)
                         request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsAdmin != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsAdmin", ConvertToString(x_IsAdmin, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsModerator != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsModerator", ConvertToString(x_IsModerator, System.Globalization.CultureInfo.InvariantCulture));
                     request_.Method = new System.Net.Http.HttpMethod("DELETE");
 
                     var urlBuilder_ = new System.Text.StringBuilder();

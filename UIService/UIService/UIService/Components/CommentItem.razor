@@ -237,7 +237,7 @@
                 Content = _editContent.Trim()
             };
 
-            await CommentsClient.UpdateAsync(Comment.Id, AuthService.UserId, request);
+            await CommentsClient.UpdateAsync(Comment.Id, AuthService.UserId, AuthService.IsAdmin, AuthService.IsModerator, request);
 
             _editContent = string.Empty;
             _editCommentId = null;
@@ -286,7 +286,7 @@
                 Content = _replyContent.Trim()
             };
 
-            await CommentsClient.CreateAsync(AuthService.UserId, request);
+            await CommentsClient.CreateAsync(AuthService.UserId, AuthService.IsAdmin, AuthService.IsModerator, request);
 
             _replyContent = string.Empty;
             _replyToCommentId = null;

@@ -10,7 +10,8 @@ internal sealed class DeleteTopicCommandHandler : IRequestHandler<DeleteTopicCom
 {
     private readonly ITopicsRepository _topicsRepository;
 
-    public DeleteTopicCommandHandler(ITopicsRepository topicsRepository)
+    public DeleteTopicCommandHandler(
+        ITopicsRepository topicsRepository)
     {
         _topicsRepository = topicsRepository;
     }
