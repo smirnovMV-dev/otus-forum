@@ -1,6 +1,5 @@
 using CommentsService.Infrastructure.Repositories.Comments;
 using Grpc.Core;
-using Microsoft.Extensions.Logging;
 using CommentProto = OtusForum.CommentsService.Grpc.Comment;
 using GetCommentsByTopicRequestProto = OtusForum.CommentsService.Grpc.GetCommentsByTopicRequest;
 using GetCommentsByTopicResponseProto = OtusForum.CommentsService.Grpc.GetCommentsByTopicResponse;
@@ -10,14 +9,11 @@ namespace CommentsService.API.Grpc;
 public sealed class CommentsGrpcService : OtusForum.CommentsService.Grpc.CommentsGrpcApi.CommentsGrpcApiBase
 {
     private readonly ICommentRepository _commentRepository;
-    private readonly ILogger<CommentsGrpcService> _logger;
 
     public CommentsGrpcService(
-        ICommentRepository commentRepository,
-        ILogger<CommentsGrpcService> logger)
+        ICommentRepository commentRepository)
     {
         _commentRepository = commentRepository;
-        _logger = logger;
     }
 
     public override async System.Threading.Tasks.Task<GetCommentsByTopicResponseProto> GetCommentsByTopic(

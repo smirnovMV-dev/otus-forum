@@ -729,6 +729,12 @@ namespace OtusForum.UI.Clients.Topics
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public System.DateTimeOffset CreatedAt { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("canEdit")]
+        public bool CanEdit { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("canDelete")]
+        public bool CanDelete { get; set; }
+
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
         [System.Text.Json.Serialization.JsonExtensionData]

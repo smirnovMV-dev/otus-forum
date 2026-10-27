@@ -85,7 +85,9 @@ public class TopicController : ControllerBase
                 ParentCommentId = c.ParentCommentId,
                 AuthorNickname = c.AuthorNickname,
                 Content = c.Content,
-                CreatedAt = c.CreatedAt
+                CreatedAt = c.CreatedAt,
+                CanEdit = c.CanEdit,
+                CanDelete = c.CanDelete
             })],
             CanEdit = result.CanEdit,
             CanDelete = result.CanDelete

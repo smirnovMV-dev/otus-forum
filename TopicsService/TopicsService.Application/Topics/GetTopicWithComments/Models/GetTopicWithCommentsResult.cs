@@ -18,4 +18,6 @@ public sealed record CommentResult(
     long? ParentCommentId,
     string AuthorNickname,
     string Content,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool CanEdit,
+    bool CanDelete);

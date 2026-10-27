@@ -48,13 +48,20 @@ internal sealed class GetTopicWithCommentsCommandHandler
         var authorIds = comments.Select(c => c.AuthorId).Distinct().ToHashSet();
         var nicknames = await _usersApiServiceAdapter.GetUsersNicknamesAsync(authorIds, cancellationToken);
 
-        var commentDtos = comments.Select(c => new CommentResult(
-            c.Id,
-            c.TopicId,
-            c.ParentCommentId,
-            nicknames.TryGetValue(c.AuthorId, out var nick) ? nick.Nickname : "Неизвестный пользователь",
-            c.Content,
-            c.CreatedAt)).ToList();
+        var commentDtos = comments.Select(c =>
+        {
+            var commentCanEdit = command.UserId == c.AuthorId || command.IsAdmin || command.IsModerator;
+            var commentCanDelete = command.UserId == c.AuthorId || command.IsAdmin || command.IsModerator;
+            return new CommentResult(
+                c.Id,
+                c.TopicId,
+                c.ParentCommentId,
+                nicknames.TryGetValue(c.AuthorId, out var nick) ? nick.Nickname : "Неизвестный пользователь",
+                c.Content,
+                c.CreatedAt,
+                commentCanEdit,
+                commentCanDelete);
+        }).ToList();
 
         var canEdit = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
         var canDelete = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;

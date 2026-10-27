@@ -13,7 +13,7 @@
     var replies = AllComments.Where(c => c.ParentCommentId == commentId).OrderBy(c => c.CreatedAt).ToList();
     var isReplying = ReplyToCommentId == commentId;
     var isEditing = EditCommentId == commentId;
-    var isAuthor = AuthService.IsAuthenticated && string.Equals(Comment.AuthorNickname, AuthService.Nickname, StringComparison.OrdinalIgnoreCase);
+
 }
 
 <div class="card mb-3 shadow-sm @(ReplyDepth > 0 ? "comment-reply" : "")" style="margin-left: @(ReplyDepth * 40)">
@@ -71,11 +71,15 @@
                 <i class="bi bi-reply me-1"></i>Ответить
             </button>
             
-            @if (isAuthor)
+            @if (Comment.CanEdit)
             {
                 <button class="btn btn-sm btn-outline-warning me-2" @onclick="ToggleEdit">
                     <i class="bi bi-pencil me-1"></i>Изменить
                 </button>
+            }
+
+            @if (Comment.CanDelete)
+            {
                 <button class="btn btn-sm btn-outline-danger" @onclick="DeleteCommentAsync">
                     <i class="bi bi-trash me-1"></i>Удалить
                 </button>

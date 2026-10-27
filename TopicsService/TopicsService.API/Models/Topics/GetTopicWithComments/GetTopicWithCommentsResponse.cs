@@ -22,4 +22,6 @@ public sealed class CommentResponse
     public required string AuthorNickname { get; set; }
     public required string Content { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
+    public bool CanEdit { get; set; }
+    public bool CanDelete { get; set; }
 }
