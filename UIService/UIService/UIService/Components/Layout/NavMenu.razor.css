@@ -124,8 +124,22 @@
     text-overflow: ellipsis;
 }
 
-.user-info .btn
+.logout-btn
 {
-    padding: 0.25rem 0.5rem;
-    flex-shrink: 0;
+    color: #d7d7d7;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    line-height: 3rem;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.logout-btn:hover
+{
+    background-color: rgba(255,255,255,0.1);
+    color: white;
 }
