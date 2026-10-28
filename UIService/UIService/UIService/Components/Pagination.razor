@@ -1,0 +1,51 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="pagination-wrapper">
+    @if (TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage - 1)">@PreviousText</a>
+                </li>
+                @for (var i = 1; i <= TotalPages; i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(pageNumber == _currentPage ? "active" : "")">
+                        <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(pageNumber)">@pageNumber</a>
+                    </li>
+                }
+                <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage + 1)">@NextText</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@code {
+    [Parameter] public int CurrentPage { get; set; }
+    [Parameter] public int TotalCount { get; set; }
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public string PreviousText { get; set; } = "Назад";
+    [Parameter] public string NextText { get; set; } = "Вперёд";
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+
+    private int _currentPage => CurrentPage;
+    private int TotalPages => PageSize > 0 ? (int)Math.Ceiling(TotalCount / (double)PageSize) : 0;
+
+    private async Task OnPageChangedAsync(int page)
+    {
+        var totalPages = TotalPages;
+        if (totalPages > 0)
+        {
+            page = Math.Max(1, Math.Min(page, totalPages));
+        }
+        else
+        {
+            page = 1;
+        }
+
+        await OnPageChanged.InvokeAsync(page);
+    }
+}
