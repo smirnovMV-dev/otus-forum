@@ -1,5 +1,3 @@
-using System;
-
 namespace UIService.Services;
 
 public class CommentRefreshService
