@@ -26,4 +26,13 @@ public interface IUserRepository
     Task<IReadOnlyCollection<string>> GetUserRoleNamesAsync(
         long userId,
         CancellationToken cancellationToken);
+
+    Task<User?> GetByIdAsync(
+        long userId,
+        CancellationToken cancellationToken);
+
+    Task UpdatePasswordAsync(
+        long userId,
+        string newPasswordHash,
+        CancellationToken cancellationToken);
 }

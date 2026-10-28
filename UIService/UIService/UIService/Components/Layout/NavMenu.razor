@@ -15,9 +15,14 @@
         @if (AuthService.IsAuthenticated)
         {
             <div class="nav-item px-3 py-2">
-                <div class="user-info">
-                    <i class="bi bi-person-circle me-2"></i>
-                    <span class="user-nickname">@AuthService.Nickname</span>
+                <div class="user-info d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span class="user-nickname">@AuthService.Nickname</span>
+                    </div>
+                    <button class="btn btn-sm btn-link p-0 text-decoration-none text-white" @onclick="NavigateToProfile" title="Профиль">
+                        ...
+                    </button>
                 </div>
             </div>
             <div class="dropdown-divider"></div>
@@ -98,5 +103,10 @@
     {
         await AuthService.ClearAsync();
         Navigation.NavigateTo("/");
+    }
+
+    private void NavigateToProfile()
+    {
+        Navigation.NavigateTo("/profile");
     }
 }

@@ -1,5 +1,6 @@
 using CommentsService.Domain.Entities;
 using CommentsService.Infrastructure.Data;
+using CommentsService.Infrastructure.Repositories.Comments.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -89,5 +90,37 @@ internal sealed class CommentRepository : ICommentRepository
             .Where(c => c.TopicId == topicId)
             .ToListAsync(cancellationToken))
             .AsReadOnly();
+    }
+
+    public async Task<PagedCommentsResult> GetByUserIdAsync(
+        long userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        if (pageSize <= 0)
+        {
+            return new PagedCommentsResult([], 0);
+        }
+
+        try
+        {
+            var totalCount = await _context.Comments
+                .CountAsync(c => c.AuthorId == userId && !c.IsDeleted, cancellationToken);
+
+            var results = await _context.Comments
+                .Where(c => c.AuthorId == userId && !c.IsDeleted)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedCommentsResult([.. results], totalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении комментариев пользователя {UserId}", userId);
+            return new PagedCommentsResult([], 0);
+        }
     }
 }

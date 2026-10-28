@@ -1,5 +1,4 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Grpc.JsonTranscoding;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,6 +15,9 @@ builder.Services.AddApplication();
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 builder.Services.AddControllers();
+
+builder.Services.AddGrpcClients();
+
 builder.Services.AddGrpc();
 builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddGrpcReflection();

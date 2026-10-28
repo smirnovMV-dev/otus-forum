@@ -127,4 +127,41 @@ internal sealed class TopicsRepository : ITopicsRepository
             throw;
         }
     }
+
+    public async Task<PagedTopicsResult> GetTopicsByUserIdAsync(
+        long userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        if (pageSize <= 0)
+        {
+            return new PagedTopicsResult([], 0);
+        }
+
+        try
+        {
+            var totalCount = await _context.Topics
+                .CountAsync(t => t.AuthorId == userId && !t.IsDeleted, cancellationToken);
+
+            var results = await _context.Topics
+                .Where(t => t.AuthorId == userId && !t.IsDeleted)
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new LatestTopicsDto(
+                    t.Id,
+                    t.Title,
+                    t.AuthorId,
+                    t.CreatedAt))
+                .ToListAsync(cancellationToken);
+
+            return new PagedTopicsResult([.. results], totalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении тем пользователя {UserId}", userId);
+            return new PagedTopicsResult([], 0);
+        }
+    }
 }

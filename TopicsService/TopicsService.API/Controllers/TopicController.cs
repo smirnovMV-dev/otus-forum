@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using TopicsService.API.Models.Topics.CreateTopic;
 using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.API.Models.Topics.GetTopicWithComments;
+using TopicsService.API.Models.Topics.GetTopicsByUserId;
 using TopicsService.API.Models.Topics.UpdateTopic;
 using TopicsService.Application.Topics.CreateTopic;
 using TopicsService.Application.Topics.DeleteTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
 using TopicsService.Application.Topics.GetTopicWithComments;
+using TopicsService.Application.Topics.GetTopicsByUserId;
 using TopicsService.Application.Topics.UpdateTopic;
 
 namespace TopicsService.API.Controllers;
@@ -124,5 +126,25 @@ public class TopicController : ControllerBase
 
         await _mediator.Send(command);
         return Ok();
+    }
+
+    [HttpPost("GetByUserId")]
+    public async Task<GetTopicsByUserIdResponse> GetByUserId(
+        [FromBody] GetTopicsByUserIdRequest request)
+    {
+        var command = new GetTopicsByUserIdCommand(request.UserId, request.Page, request.PageSize);
+        var results = await _mediator.Send(command);
+
+        return new GetTopicsByUserIdResponse
+        {
+            Topics = [.. results.Topics.Select(r => new LatestTopicsResponse
+            {
+                Id = r.Id,
+                Title = r.Title,
+                AuthorNikname = r.AuthorNikname,
+                CreatedAt = r.CreatedAt
+            })],
+            TotalCount = results.TotalCount
+        };
     }
 }

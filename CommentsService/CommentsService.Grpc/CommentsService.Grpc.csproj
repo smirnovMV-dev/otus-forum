@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IncludeHttpRuleProtos>true</IncludeHttpRuleProtos>
@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <Folder Include="Protos\Servers\" />
+    <Folder Include="Protos\Clients\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,5 +21,6 @@
 
   <ItemGroup>
     <Protobuf Include="Protos\Servers\*.proto" GrpcServices="Server" />
+	<Protobuf Include="Protos\Clients\*.proto" GrpcServices="Clients" />
   </ItemGroup>
 </Project>

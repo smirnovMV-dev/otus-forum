@@ -100,4 +100,30 @@ internal sealed class UserRepository : IUserRepository
                 (userRole, role) => role.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<User?> GetByIdAsync(
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+    }
+
+    public async Task UpdatePasswordAsync(
+        long userId,
+        string newPasswordHash,
+        CancellationToken cancellationToken)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException($"User with ID {userId} not found.");
+        }
+
+        user.ChangePassword(newPasswordHash);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

@@ -1,11 +1,14 @@
 using CommentsService.API.Models.Comments.CreateComment;
 using CommentsService.API.Models.Comments.DeleteComment;
+using CommentsService.API.Models.Comments.GetCommentsByUserId;
 using CommentsService.API.Models.Comments.UpdateComment;
 using CommentsService.Application.Comments.CreateComment;
 using CommentsService.Application.Comments.DeleteComment;
+using CommentsService.Application.Comments.GetCommentsByUserId;
 using CommentsService.Application.Comments.UpdateComment;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CommentsService.API.Controllers;
@@ -72,5 +75,27 @@ public class CommentController : ControllerBase
         await _mediator.Send(command);
 
         return new DeleteCommentResponse();
+    }
+
+    [HttpPost("GetByUserId")]
+    public async Task<GetCommentsByUserIdResponse> GetByUserId(
+        [FromBody] GetCommentsByUserIdRequest request)
+    {
+        var command = new GetCommentsByUserIdCommand(request.UserId, request.Page, request.PageSize);
+        var results = await _mediator.Send(command);
+
+        return new GetCommentsByUserIdResponse
+        {
+            Comments = [.. results.Comments.Select(r => new GetCommentsByUserIdItemResponse
+            {
+                Id = r.Id,
+                TopicId = r.TopicId,
+                ParentCommentId = r.ParentCommentId,
+                AuthorNickname = r.AuthorNickname,
+                Content = r.Content,
+                CreatedAt = r.CreatedAt
+            })],
+            TotalCount = results.TotalCount
+        };
     }
 }

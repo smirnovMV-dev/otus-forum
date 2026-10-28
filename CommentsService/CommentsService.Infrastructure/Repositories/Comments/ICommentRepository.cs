@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using CommentsService.Domain.Entities;
+using CommentsService.Infrastructure.Repositories.Comments.Models;
 
 namespace CommentsService.Infrastructure.Repositories.Comments;
 
@@ -23,5 +24,11 @@ public interface ICommentRepository
 
     Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
         long topicId,
+        CancellationToken cancellationToken);
+
+    Task<PagedCommentsResult> GetByUserIdAsync(
+        long userId,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken);
 }

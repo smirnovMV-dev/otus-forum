@@ -3,12 +3,15 @@
 	<ItemGroup>
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+		<PackageReference Include="Grpc.Net.ClientFactory" />
 		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\CommentsService.Domain\CommentsService.Domain.csproj" />
 		<ProjectReference Include="..\CommentsService.Infrastructure\CommentsService.Infrastructure.csproj" />
+		<ProjectReference Include="..\CommentsService.Grpc\CommentsService.Grpc.csproj" />
 	</ItemGroup>
 
 </Project>

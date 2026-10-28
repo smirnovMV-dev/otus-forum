@@ -29,4 +29,10 @@ public interface ITopicsRepository
         DateTimeOffset cutoffDate,
         int batchSize,
         CancellationToken cancellationToken);
+
+    Task<PagedTopicsResult> GetTopicsByUserIdAsync(
+        long userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken);
 }
