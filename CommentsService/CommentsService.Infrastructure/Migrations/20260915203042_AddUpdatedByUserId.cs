@@ -10,21 +10,21 @@ namespace CommentsService.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "updated_by_author_id",
+            migrationBuilder.AddColumn<long?>(
+                name: "updated_by_user_id",
                 schema: "public",
                 table: "comments",
-                newName: "updated_by_user_id");
+                type: "bigint",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "updated_by_user_id",
                 schema: "public",
-                table: "comments",
-                newName: "updated_by_author_id");
+                table: "comments");
         }
     }
 }
