@@ -124,6 +124,24 @@
     text-overflow: ellipsis;
 }
 
+.profile-btn
+{
+    color: white;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 4px;
+    background: transparent;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.profile-btn:hover
+{
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 .logout-btn
 {
     color: #d7d7d7;

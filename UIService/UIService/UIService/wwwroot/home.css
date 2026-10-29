@@ -2,14 +2,14 @@
 .hero-section {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     color: #fff;
-    padding: 5rem 0;
+    padding: 2.5rem 0;
     margin-bottom: 0;
 }
 
 .hero-title {
-    font-size: 3rem;
+    font-size: 2.25rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .hero-title .highlight {
@@ -17,9 +17,9 @@
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 .hero-actions .btn {
