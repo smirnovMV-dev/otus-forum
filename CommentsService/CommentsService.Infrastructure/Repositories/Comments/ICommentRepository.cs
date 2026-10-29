@@ -22,12 +22,14 @@ public interface ICommentRepository
         DateTimeOffset deletedAt,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
-        long topicId,
-        CancellationToken cancellationToken);
-
     Task<PagedCommentsResult> GetByUserIdAsync(
         long userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken);
+
+    Task<(IReadOnlyCollection<Comment> RootComments, IReadOnlyCollection<Comment> ChildComments)> GetPagedCommentTreeAsync(
+        long topicId,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

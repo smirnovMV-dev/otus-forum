@@ -1,3 +1,4 @@
+using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using OtusForum.CommentsService.Grpc;
 using System;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TopicsService.Application.Services.Externals.CommentsApiService.Models;
+using CommentProto = OtusForum.CommentsService.Grpc.Comment;
 
 namespace TopicsService.Application.Services.Externals.CommentsApiService;
 
@@ -24,13 +26,17 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
 
     public async Task<IReadOnlyCollection<CommentDto>> GetCommentsByTopicIdAsync(
         long topicId,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken)
     {
         try
         {
             var request = new GetCommentsByTopicRequest
             {
-                TopicId = topicId
+                TopicId = topicId,
+                Page = page,
+                PageSize = pageSize
             };
 
             var response = await _client.GetCommentsByTopicAsync(
@@ -38,13 +44,7 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
                 cancellationToken: cancellationToken);
 
             return response.Comments
-                .Select(c => new CommentDto(
-                    c.Id,
-                    c.TopicId,
-                    c.ParentCommentId == 0 ? (long?)null : c.ParentCommentId,
-                    c.AuthorId,
-                    c.Content,
-                    DateTimeOffset.Parse(c.CreatedAt)))
+                .Select(MapToCommentDto)
                 .ToList()
                 .AsReadOnly();
         }
@@ -53,5 +53,22 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
             _logger.LogError(ex, "Ошибка при получении комментариев для темы {TopicId}", topicId);
             return new List<CommentDto>().AsReadOnly();
         }
+    }
+
+    private CommentDto MapToCommentDto(Comment proto)
+    {
+        var replies = proto.Replies
+            .Select(MapToCommentDto)
+            .ToList();
+
+        return new CommentDto(
+            proto.Id,
+            proto.TopicId,
+            proto.ParentCommentId == 0 ? (long?)null : proto.ParentCommentId,
+            proto.AuthorId,
+            proto.Content,
+            proto.CreatedAt,
+            proto.UpdatedAt,
+            replies as IReadOnlyCollection<CommentDto>);
     }
 }

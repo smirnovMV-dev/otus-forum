@@ -20,4 +20,5 @@ public sealed record CommentResult(
     string Content,
     DateTimeOffset CreatedAt,
     bool CanEdit,
-    bool CanDelete);
+    bool CanDelete,
+    IReadOnlyCollection<CommentResult> Replies);

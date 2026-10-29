@@ -9,18 +9,21 @@ package comments;
 service CommentsGrpcApi {
 	rpc GetCommentsByTopic (GetCommentsByTopicRequest) returns (GetCommentsByTopicResponse) {
 		option (google.api.http) = {
-	    	post: "/api/v1/comments/bytopic"
-	    	body: "*"
+	   		post: "/api/v1/comments/bytopic"
+	   		body: "*"
 		};
 	}
 }
 
 message GetCommentsByTopicRequest {
 	int64 topic_id = 1;
+	int32 page = 2;
+	int32 page_size = 3;
 }
 
 message GetCommentsByTopicResponse {
 	repeated Comment comments = 1;
+	int32 total_count = 2;
 }
 
 message Comment {
@@ -31,4 +34,5 @@ message Comment {
 	string content = 5;
 	string created_at = 6;
 	string updated_at = 7;
+	repeated Comment replies = 8;
 }

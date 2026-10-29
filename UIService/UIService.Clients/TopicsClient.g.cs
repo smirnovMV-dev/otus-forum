@@ -47,12 +47,12 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator);
+        System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, int? page, int? pageSize, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, int? page, int? pageSize, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -312,15 +312,15 @@ namespace OtusForum.UI.Clients.Topics
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator)
+        public virtual System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, int? page, int? pageSize, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator)
         {
-            return WithCommentsAsync(id, x_UserId, x_IsAdmin, x_IsModerator, System.Threading.CancellationToken.None);
+            return WithCommentsAsync(id, page, pageSize, x_UserId, x_IsAdmin, x_IsModerator, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<GetTopicWithCommentsResponse> WithCommentsAsync(long id, int? page, int? pageSize, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new System.ArgumentNullException("id");
@@ -349,6 +349,16 @@ namespace OtusForum.UI.Clients.Topics
                     urlBuilder_.Append("Topic/");
                     urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(id, System.Globalization.CultureInfo.InvariantCulture)));
                     urlBuilder_.Append("/with-comments");
+                    urlBuilder_.Append('?');
+                    if (page != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("page")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(page, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (pageSize != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("pageSize")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(pageSize, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    urlBuilder_.Length--;
 
                     PrepareRequest(client_, request_, urlBuilder_);
 
@@ -828,6 +838,10 @@ namespace OtusForum.UI.Clients.Topics
 
         [System.Text.Json.Serialization.JsonPropertyName("canDelete")]
         public bool CanDelete { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("replies")]
+        [System.ComponentModel.DataAnnotations.Required]
+        public System.Collections.Generic.ICollection<CommentResponse> Replies { get; set; } = new System.Collections.ObjectModel.Collection<CommentResponse>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

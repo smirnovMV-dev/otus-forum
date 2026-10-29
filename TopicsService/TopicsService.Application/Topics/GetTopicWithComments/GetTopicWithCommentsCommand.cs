@@ -7,5 +7,7 @@ public sealed record GetTopicWithCommentsCommand(
     long TopicId,
     long UserId,
     bool IsAdmin,
-    bool IsModerator)
+    bool IsModerator,
+    int Page,
+    int PageSize)
     : IRequest<GetTopicWithCommentsResult>;

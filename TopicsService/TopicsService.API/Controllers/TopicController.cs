@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TopicsService.API.Models.Topics.CreateTopic;
@@ -11,6 +12,7 @@ using TopicsService.Application.Topics.CreateTopic;
 using TopicsService.Application.Topics.DeleteTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
 using TopicsService.Application.Topics.GetTopicWithComments;
+using TopicsService.Application.Topics.GetTopicWithComments.Models;
 using TopicsService.Application.Topics.GetTopicsByUserId;
 using TopicsService.Application.Topics.UpdateTopic;
 
@@ -68,11 +70,13 @@ public class TopicController : ControllerBase
     [HttpGet("{id:long}/with-comments")]
     public async Task<GetTopicWithCommentsResponse> GetWithComments(
         long id,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
         [FromHeader(Name = "X-UserId")] long userId = 0,
         [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
         [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
     {
-        var result = await _mediator.Send(new GetTopicWithCommentsCommand(id, userId, isAdmin, isModerator));
+        var result = await _mediator.Send(new GetTopicWithCommentsCommand(id, userId, isAdmin, isModerator, page, pageSize));
 
         return new GetTopicWithCommentsResponse
         {
@@ -80,19 +84,25 @@ public class TopicController : ControllerBase
             Title = result.Title,
             AuthorId = result.AuthorId,
             CreatedAt = result.CreatedAt,
-            Comments = [.. result.Comments.Select(c => new CommentResponse
-            {
-                Id = c.Id,
-                TopicId = c.TopicId,
-                ParentCommentId = c.ParentCommentId,
-                AuthorNickname = c.AuthorNickname,
-                Content = c.Content,
-                CreatedAt = c.CreatedAt,
-                CanEdit = c.CanEdit,
-                CanDelete = c.CanDelete
-            })],
+            Comments = [.. result.Comments.Select(MapCommentResponse)],
             CanEdit = result.CanEdit,
             CanDelete = result.CanDelete
+        };
+    }
+
+    private CommentResponse MapCommentResponse(CommentResult result)
+    {
+        return new CommentResponse
+        {
+            Id = result.Id,
+            TopicId = result.TopicId,
+            ParentCommentId = result.ParentCommentId,
+            AuthorNickname = result.AuthorNickname,
+            Content = result.Content,
+            CreatedAt = result.CreatedAt,
+            CanEdit = result.CanEdit,
+            CanDelete = result.CanDelete,
+            Replies = [.. result.Replies.Select(MapCommentResponse)]
         };
     }
 

@@ -82,16 +82,6 @@ internal sealed class CommentRepository : ICommentRepository
         }
     }
 
-    public async Task<IReadOnlyCollection<Comment>> GetByTopicIdAsync(
-        long topicId,
-        CancellationToken cancellationToken)
-    {
-        return (await _context.Comments
-            .Where(c => c.TopicId == topicId)
-            .ToListAsync(cancellationToken))
-            .AsReadOnly();
-    }
-
     public async Task<PagedCommentsResult> GetByUserIdAsync(
         long userId,
         int page,
@@ -121,6 +111,63 @@ internal sealed class CommentRepository : ICommentRepository
         {
             _logger.LogError(ex, "Ошибка при получении комментариев пользователя {UserId}", userId);
             return new PagedCommentsResult([], 0);
+        }
+    }
+
+    public async Task<(IReadOnlyCollection<Comment> RootComments, IReadOnlyCollection<Comment> ChildComments)> GetPagedCommentTreeAsync(
+        long topicId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        if (pageSize <= 0)
+        {
+            return ([], []);
+        }
+
+        try
+        {
+            // 1. Paginate root comments (oldest first)
+            var rootComments = await _context.Comments
+                .Where(c => c.TopicId == topicId && c.ParentCommentId == null)
+                .OrderBy(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            if (!rootComments.Any())
+            {
+                return ([], []);
+            }
+
+            var rootIds = rootComments.Select(rc => rc.Id).ToList();
+
+            // 2. Recursive CTE to fetch all descendants
+            var childComments = await _context.Comments
+                .FromSqlRaw(@"
+                    WITH RECURSIVE CommentTree AS (
+                        SELECT id, topic_id, parent_comment_id, author_id, content, created_at, updated_at,
+                               updated_by_user_id, is_deleted, deleted_at
+                        FROM public.comments
+                        WHERE parent_comment_id = ANY({0})
+
+                        UNION ALL
+
+                        SELECT c.id, c.topic_id, c.parent_comment_id, c.author_id, c.content, c.created_at, c.updated_at,
+                               c.updated_by_user_id, c.is_deleted, c.deleted_at
+                        FROM public.comments c
+                        INNER JOIN CommentTree ct ON c.parent_comment_id = ct.id
+                    )
+                    SELECT * FROM CommentTree", rootIds.ToArray())
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            return (rootComments.AsReadOnly(), childComments.AsReadOnly());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении древовидных комментариев для топика {TopicId}", topicId);
+            return ([], []);
         }
     }
 }

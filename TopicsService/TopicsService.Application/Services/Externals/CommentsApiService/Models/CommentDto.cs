@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace TopicsService.Application.Services.Externals.CommentsApiService.Models;
 
@@ -8,4 +9,6 @@ public sealed record CommentDto(
     long? ParentCommentId,
     long AuthorId,
     string Content,
-    DateTimeOffset CreatedAt);
+    string CreatedAt,
+    string UpdatedAt,
+    IReadOnlyCollection<CommentDto> Replies);

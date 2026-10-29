@@ -69,29 +69,46 @@ else
             </div>
         </div>
 
-        <h5 class="mb-3">
-            <i class="bi bi-chat-left-text me-2"></i>
-            Комментарии @_topicWithComments.Comments.Count
-        </h5>
-
-        @if (!_topicWithComments.Comments.Any())
+        @if (_topicWithComments?.Comments.Any() == true)
+        {
+            <h5 class="mb-3">
+                <i class="bi bi-chat-left-text me-2"></i>
+                Комментарии
+            </h5>
+        }
+        else
         {
             <div class="alert alert-info" role="alert">
                 <i class="bi bi-info-circle me-2"></i>Комментариев пока нет. Станьте первым!
             </div>
         }
-        else
-        {
-            @* Получаем корневые комментарии (без родителя) *@
-            var rootComments = _topicWithComments.Comments
-                .Where(c => c.ParentCommentId == null)
-                .OrderBy(c => c.CreatedAt)
-                .ToList();
 
-            @foreach (var comment in rootComments)
+        @if (_topicWithComments?.Comments.Any() == true)
+        {
+            @* Комментарии уже приходят древовидными с вложенными Replies *@
+            @foreach (var comment in _topicWithComments.Comments)
             {
-                <CommentItem Comment="comment" AllComments="_topicWithComments.Comments.ToList()" TopicId="TopicId" />
+                <CommentItem Comment="comment" TopicId="TopicId" />
             }
+
+            @* Пагинация *@
+            <nav aria-label="Навигация по комментариям" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="(() => ChangePage(_currentPage - 1))" disabled="@(_currentPage <= 1)">
+                            <i class="bi bi-chevron-left me-1"></i>Назад
+                        </button>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Страница @_currentPage</span>
+                    </li>
+                    <li class="page-item @(_hasNextPage ? "" : "disabled")">
+                        <button class="page-link" @onclick="(() => ChangePage(_currentPage + 1))" disabled="@(!_hasNextPage)">
+                            Далее<i class="bi bi-chevron-right ms-1"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
         }
 
         @if (AuthService.IsAuthenticated)
@@ -231,6 +248,9 @@ else
 
     private GetTopicWithCommentsResponse? _topicWithComments;
     private bool _isLoading = true;
+    private int _currentPage = 1;
+    private const int PageSize = 20;
+    private bool _hasNextPage = false;
     private string _commentContent = string.Empty;
     private bool _isSubmitting = false;
     private string? _submitMessage;
@@ -289,9 +309,15 @@ else
         {
             _topicWithComments = await TopicsService.WithCommentsAsync(
                 TopicId,
+                _currentPage,
+                PageSize,
                 AuthService.UserId,
                 AuthService.IsAdmin,
                 AuthService.IsModerator);
+
+            // Определяем, есть ли следующая страница
+            // total_count не приходит в ответе, поэтому проверяем по количеству комментариев на странице
+            _hasNextPage = _topicWithComments?.Comments?.Count >= PageSize;
         }
         catch (Exception ex)
         {
@@ -306,8 +332,17 @@ else
 
     private async Task ReloadCommentsAsync()
     {
+        _currentPage = 1;
         await LoadTopicWithCommentsAsync();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ChangePage(int page)
+    {
+        _currentPage = page;
+        await LoadTopicWithCommentsAsync();
+        // Скролл наверх к комментариям
+        await JSRuntime.InvokeVoidAsync("scrollTo", new { top = 0, behavior = "smooth" });
     }
 
     private async Task SubmitCommentAsync()

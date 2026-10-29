@@ -24,4 +24,5 @@ public sealed class CommentResponse
     public required DateTimeOffset CreatedAt { get; set; }
     public bool CanEdit { get; set; }
     public bool CanDelete { get; set; }
+    public required IReadOnlyCollection<CommentResponse> Replies { get; set; }
 }
