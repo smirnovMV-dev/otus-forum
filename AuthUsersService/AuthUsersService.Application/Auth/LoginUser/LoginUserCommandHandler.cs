@@ -41,15 +41,15 @@ internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand
         }
 
         var roleNames = await _userRepository.GetUserRoleNamesAsync(user.Id, cancellationToken);
-        var accessLevels = roleNames
-            .Select(AccessLevelMapping.FromName)
+        var roleNamesEnum = roleNames
+            .Select(RoleNameMapping.FromName)
             .Distinct()
             .ToList();
 
-        var token = _jwtTokenGenerator.GenerateToken(user, accessLevels);
+        var token = _jwtTokenGenerator.GenerateToken(user, roleNamesEnum);
 
-        var isAdmin = accessLevels.Contains(AccessLevel.Admin);
-        var isModerator = accessLevels.Contains(AccessLevel.Moderator);
+        var isAdmin = roleNamesEnum.Contains(RoleName.Admin);
+        var isModerator = roleNamesEnum.Contains(RoleName.Moderator);
 
         return new LoginUserResponse(token, user.Id, user.Nickname, isAdmin, isModerator);
     }

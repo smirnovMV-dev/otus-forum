@@ -1,4 +1,5 @@
 using AuthUsersService.Domain.Entities;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,5 +12,8 @@ public interface IRoleRepository
         CancellationToken cancellationToken);
 
     Task<int> CountAsync(
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<Role>> GetAllAsync(
         CancellationToken cancellationToken);
 }

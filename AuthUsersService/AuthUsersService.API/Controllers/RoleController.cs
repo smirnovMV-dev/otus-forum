@@ -1,8 +1,11 @@
 using AuthUsersService.API.Models.Roles.CreateRole;
+using AuthUsersService.API.Models.Roles.GetAllRoles;
 using AuthUsersService.Application.Roles.CountRoles;
 using AuthUsersService.Application.Roles.CreateRole;
+using AuthUsersService.Application.Roles.GetAllRoles;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AuthUsersService.API.Controllers;
@@ -34,5 +37,26 @@ public sealed class RoleController : ControllerBase
     {
         var command = new CountRolesCommand();
         return await _mediator.Send(command);
+    }
+
+    [HttpGet("GetAll")]
+    public async Task<IActionResult> GetAll(
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
+    {
+        if (!isAdmin)
+            return Forbid();
+
+        var command = new GetAllRolesCommand();
+        var roles = await _mediator.Send(command);
+
+        var models = roles
+            .Select(r => new RoleModel
+            {
+                Id = r.Id,
+                Name = r.Name
+            })
+            .ToList();
+
+        return Ok(new GetAllRolesResponse { Roles = models });
     }
 }

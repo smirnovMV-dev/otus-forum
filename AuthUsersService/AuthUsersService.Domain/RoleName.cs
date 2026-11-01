@@ -1,6 +1,6 @@
 namespace AuthUsersService.Domain;
 
-public enum AccessLevel
+public enum RoleName
 {
     Unknown = 0,
     User = 1,

@@ -21,7 +21,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         _configuration = configuration;
     }
 
-    public string GenerateToken(User user, IReadOnlyCollection<AccessLevel> accessLevels)
+    public string GenerateToken(User user, IReadOnlyCollection<RoleName> roleNames)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var signingKey = jwtSettings["SigningKey"] ?? throw new InvalidOperationException("JWT SigningKey not configured.");
@@ -32,8 +32,8 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var isAdmin = accessLevels.Contains(AccessLevel.Admin);
-        var isModerator = accessLevels.Contains(AccessLevel.Moderator);
+        var isAdmin = roleNames.Contains(RoleName.Admin);
+        var isModerator = roleNames.Contains(RoleName.Moderator);
 
         var claims = new[]
         {
