@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
   	<ProjectReference Include="..\AuthUsersService.Domain\AuthUsersService.Domain.csproj" />
-  	<ProjectReference Include="..\AuthUsersService.Infrastructure\AuthUsersService.Infrastructure.csproj" />
-	<ProjectReference Include="..\AuthUsersService.Grpc\AuthUsersService.Grpc.csproj" />
+  	<ProjectReference Include="..\AuthUsersService.Grpc\AuthUsersService.Grpc.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" />

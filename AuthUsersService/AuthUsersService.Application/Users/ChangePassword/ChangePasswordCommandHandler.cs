@@ -1,8 +1,4 @@
-using AuthUsersService.Application.Users.ChangePassword;
-using AuthUsersService.Domain.Entities;
-using AuthUsersService.Infrastructure.Repositories.Users;
 using MediatR;
-using BCrypt.Net;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

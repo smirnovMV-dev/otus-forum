@@ -1,4 +1,3 @@
-using AuthUsersService.Domain.Entities;
 using MediatR;
 
 namespace AuthUsersService.Application.Users.ChangePassword;

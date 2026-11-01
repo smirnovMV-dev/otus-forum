@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AuthUsersService.Infrastructure.Repositories.Roles;
+namespace AuthUsersService.Application.Roles;
 
 public interface IRoleRepository
 {

@@ -3,6 +3,7 @@ using AuthUsersService.API.Models.Roles.GetAllRoles;
 using AuthUsersService.Application.Roles.CountRoles;
 using AuthUsersService.Application.Roles.CreateRole;
 using AuthUsersService.Application.Roles.GetAllRoles;
+using AuthUsersService.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
@@ -25,8 +26,8 @@ public sealed class RoleController : ControllerBase
     public async Task<CreateRoleResponse> Create(
         [FromBody] CreateRoleRequest request)
     {
-        var command = new CreateRoleCommand(
-            request.RoleName);
+        var roleName = RoleNameExtensions.FromString(request.RoleName);
+        var command = new CreateRoleCommand(roleName);
 
         await _mediator.Send(command);
         return new CreateRoleResponse();

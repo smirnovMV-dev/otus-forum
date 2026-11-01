@@ -8,6 +8,7 @@
 	<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AuthUsersService.Application\AuthUsersService.Application.csproj" />
     <ProjectReference Include="..\AuthUsersService.Domain\AuthUsersService.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>

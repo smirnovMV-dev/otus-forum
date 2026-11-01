@@ -1,5 +1,7 @@
+using AuthUsersService.Application.Users;
 using AuthUsersService.Domain.Entities;
 using AuthUsersService.Infrastructure.Data;
+using AuthUsersService.Infrastructure.Mappers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -9,8 +11,8 @@ namespace AuthUsersService.Infrastructure.Repositories.UserRoles;
 
 internal sealed class UserRoleRepository : IUserRoleRepository
 {
-    private readonly ApplicationDbContext _context;
     private readonly ILogger<UserRoleRepository> _logger;
+    private readonly ApplicationDbContext _context;
 
     public UserRoleRepository(
         ApplicationDbContext context,
@@ -22,17 +24,17 @@ internal sealed class UserRoleRepository : IUserRoleRepository
 
     public async Task<int> CreateAsync(
         UserRole userRole,
-        CancellationToken cancelationtoken)
+        CancellationToken cancellationToken)
     {
         try
         {
-            await _context.UserRoles.AddAsync(userRole);
-            return await _context.SaveChangesAsync(cancelationtoken);
+            await _context.UserRoles.AddAsync(userRole.ToEntity());
+            return await _context.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex.Message);
-            throw;
+            return -1;
         }
     }
 }

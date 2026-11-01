@@ -1,5 +1,4 @@
 using AuthUsersService.Application.Users.GetNicknames.Models;
-using AuthUsersService.Infrastructure.Repositories.Users;
 using MediatR;
 using System.Collections.Generic;
 using System.Linq;

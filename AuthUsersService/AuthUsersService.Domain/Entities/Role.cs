@@ -5,11 +5,11 @@ namespace AuthUsersService.Domain.Entities;
 public sealed record Role
 {
     public long Id { get; private set; }
-    public string Name { get; }
+    public RoleName Name { get; }
     public DateTimeOffset CreatedAt { get; }
 
     public static Role Create(
-        string name,
+        RoleName name,
         DateTimeOffset createdAt)
     {
         return new Role(
@@ -20,7 +20,7 @@ public sealed record Role
     public long SetId(long id) => Id = id;
 
     private Role(
-        string name,
+        RoleName name,
         DateTimeOffset createdAt)
     {
         Name = name;

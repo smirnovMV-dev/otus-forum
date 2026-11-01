@@ -1,5 +1,4 @@
 using AuthUsersService.Domain.Entities;
-using AuthUsersService.Infrastructure.Repositories.Users;
 using MediatR;
 using System;
 using System.Threading;

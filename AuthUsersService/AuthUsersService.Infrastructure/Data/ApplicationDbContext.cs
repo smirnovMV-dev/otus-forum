@@ -1,4 +1,3 @@
-using AuthUsersService.Domain.Entities;
 using AuthUsersService.Infrastructure.Mappers;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +7,9 @@ internal sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options)
     : DbContext(options)
 {
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<User> Users => Set<User>();
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RoleEntity> Roles => Set<RoleEntity>();
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<UserRoleEntity> UserRoles => Set<UserRoleEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

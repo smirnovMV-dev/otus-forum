@@ -1,10 +1,10 @@
+using AuthUsersService.Domain;
 using AuthUsersService.Domain.Entities;
-using AuthUsersService.Infrastructure.Repositories.Users.Models;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AuthUsersService.Infrastructure.Repositories.Users;
+namespace AuthUsersService.Application.Users;
 
 public interface IUserRepository
 {
@@ -23,7 +23,7 @@ public interface IUserRepository
     Task<int> CountAsync(
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyCollection<string>> GetUserRoleNamesAsync(
+    Task<IReadOnlyCollection<RoleName>> GetUserRoleNamesAsync(
         long userId,
         CancellationToken cancellationToken);
 

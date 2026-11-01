@@ -7,3 +7,14 @@ public enum RoleName
     Admin = 2,
     Moderator = 3
 }
+
+public static class RoleNameExtensions
+{
+    public static RoleName FromString(string name) => name switch
+    {
+        "Admin" => RoleName.Admin,
+        "Moderator" => RoleName.Moderator,
+        "User" => RoleName.User,
+        _ => RoleName.Unknown
+    };
+}

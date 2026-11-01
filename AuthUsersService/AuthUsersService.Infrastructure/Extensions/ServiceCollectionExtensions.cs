@@ -1,3 +1,5 @@
+using AuthUsersService.Application.Roles;
+using AuthUsersService.Application.Users;
 using AuthUsersService.Infrastructure.Data;
 using AuthUsersService.Infrastructure.Repositories.Roles;
 using AuthUsersService.Infrastructure.Repositories.UserRoles;

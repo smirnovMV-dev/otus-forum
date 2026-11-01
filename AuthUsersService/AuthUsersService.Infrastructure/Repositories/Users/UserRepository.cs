@@ -1,7 +1,9 @@
+using AuthUsersService.Application.Users;
+using AuthUsersService.Domain;
 using AuthUsersService.Domain.Entities;
 using AuthUsersService.Infrastructure.Data;
+using AuthUsersService.Infrastructure.Mappers;
 using AuthUsersService.Infrastructure.Repositories.Users.Dtos;
-using AuthUsersService.Infrastructure.Repositories.Users.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -31,7 +33,7 @@ internal sealed class UserRepository : IUserRepository
     {
         try
         {
-            await _context.Users.AddAsync(user);
+            await _context.Users.AddAsync(user.ToEntity());
             return await _context.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
@@ -53,12 +55,12 @@ internal sealed class UserRepository : IUserRepository
         try
         {
             var results = await _context.Users
-            .AsNoTracking()
-            .Where(user => userIds.Contains(user.Id))
-            .Select(user => new UserNicknameDto(user.Id, user.Nickname))
-            .ToListAsync(cancellationToken);
+                .AsNoTracking()
+                .Where(user => userIds.Contains(user.Id))
+                .Select(user => new UserNicknameDto(user.Id, user.Nickname))
+                .ToListAsync(cancellationToken);
 
-            return [.. results.Select(UserNicknameModel.Create)];
+            return [.. results.Select(dto => new UserNicknameModel(dto.UserId, dto.Nickname))];
         }
         catch (Exception ex)
         {
@@ -74,9 +76,11 @@ internal sealed class UserRepository : IUserRepository
         if (string.IsNullOrWhiteSpace(email))
             return null;
 
-        return await _context.Users
+        var entity = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
+        return entity?.ToDomain();
     }
 
     public async Task<int> CountAsync(
@@ -87,7 +91,7 @@ internal sealed class UserRepository : IUserRepository
             .CountAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<string>> GetUserRoleNamesAsync(
+    public async Task<IReadOnlyCollection<RoleName>> GetUserRoleNamesAsync(
         long userId,
         CancellationToken cancellationToken)
     {
@@ -105,9 +109,11 @@ internal sealed class UserRepository : IUserRepository
         long userId,
         CancellationToken cancellationToken)
     {
-        return await _context.Users
+        var entity = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        return entity?.ToDomain();
     }
 
     public async Task UpdatePasswordAsync(
@@ -123,7 +129,7 @@ internal sealed class UserRepository : IUserRepository
             throw new KeyNotFoundException($"User with ID {userId} not found.");
         }
 
-        user.ChangePassword(newPasswordHash);
+        user.PasswordHash = newPasswordHash;
         await _context.SaveChangesAsync(cancellationToken);
     }
 }

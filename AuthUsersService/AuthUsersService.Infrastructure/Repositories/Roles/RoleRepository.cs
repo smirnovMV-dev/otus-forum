@@ -1,9 +1,12 @@
+using AuthUsersService.Application.Roles;
 using AuthUsersService.Domain.Entities;
 using AuthUsersService.Infrastructure.Data;
+using AuthUsersService.Infrastructure.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +31,7 @@ internal sealed class RoleRepository : IRoleRepository
     {
         try
         {
-            await _context.Roles.AddAsync(role);
+            await _context.Roles.AddAsync(role.ToEntity());
             return await _context.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
@@ -49,8 +52,10 @@ internal sealed class RoleRepository : IRoleRepository
     public async Task<IReadOnlyCollection<Role>> GetAllAsync(
         CancellationToken cancellationToken)
     {
-        return await _context.Roles
+        var entities = await _context.Roles
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+
+        return [.. entities.Select(e => e.ToDomain())];
     }
 }

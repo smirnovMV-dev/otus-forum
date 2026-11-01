@@ -1,7 +1,5 @@
-using AuthUsersService.Domain.Entities;
-using AuthUsersService.Infrastructure.Repositories.Roles;
+using AuthUsersService.Domain;
 using MediatR;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -14,7 +12,7 @@ public sealed record GetAllRolesCommand() : IRequest<IReadOnlyCollection<RoleDto
 public sealed record RoleDto
 {
     public long Id { get; init; }
-    public string Name { get; init; } = string.Empty;
+    public RoleName Name { get; init; }
 }
 
 internal sealed class GetAllRolesCommandHandler : IRequestHandler<GetAllRolesCommand, IReadOnlyCollection<RoleDto>>

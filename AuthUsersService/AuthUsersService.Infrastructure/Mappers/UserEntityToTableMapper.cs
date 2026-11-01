@@ -1,4 +1,4 @@
-using AuthUsersService.Domain.Entities;
+using AuthUsersService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthUsersService.Infrastructure.Mappers;
@@ -7,7 +7,7 @@ internal static class UserEntityToTableMapper
 {
     public static ModelBuilder Map(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.Entity<UserEntity>(entity =>
         {
             entity.ToTable("users", "public");
 
