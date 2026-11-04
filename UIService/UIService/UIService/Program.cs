@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using OtusForum.UI.Clients.Comments;
 using OtusForum.UI.Clients.Topics;
 using OtusForum.UI.Clients.Users;
@@ -7,77 +8,85 @@ using UIService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure DataProtection to persist keys across container restarts
+var keysPath = "/shared-keys";
+Directory.CreateDirectory(keysPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
-// Регистрируем автосгенерированный клиент
+// Register authentication service
+builder.Services.AddScoped<AuthService>();
+
+// Register AuthHeaderHandler for JWT token injection
+builder.Services.AddTransient<AuthHeaderHandler>();
+
+// Register error logging handler
 builder.Services.AddTransient<ErrorLoggingHandler>();
 
-// Named HttpClients for general use.
+// Register NSwag API clients through GatewayService
+var gatewayUrl = builder.Configuration.GetValue<string>("GatewayUrl") ?? "http://gateway-service:5000";
+
 builder.Services.AddHttpClient("TopicsClient", client =>
 {
-    client.BaseAddress = new Uri("http://topics-service:5294/");
+    client.BaseAddress = new Uri($"{gatewayUrl}/api/topics/");
     client.Timeout = TimeSpan.FromMinutes(1);
-});
+})
+.AddHttpMessageHandler<AuthHeaderHandler>();
+
 builder.Services.AddHttpClient("UsersClient", client =>
 {
-    client.BaseAddress = new Uri("http://auth-users-service:5225/");
+    client.BaseAddress = new Uri($"{gatewayUrl}/api/auth/");
     client.Timeout = TimeSpan.FromMinutes(1);
-});
+})
+.AddHttpMessageHandler<AuthHeaderHandler>();
+
 builder.Services.AddHttpClient("CommentsClient", client =>
 {
-    client.BaseAddress = new Uri("http://comments-service:5044/");
+    client.BaseAddress = new Uri($"{gatewayUrl}/api/comments/");
     client.Timeout = TimeSpan.FromMinutes(1);
-});
+})
+.AddHttpMessageHandler<AuthHeaderHandler>();
 
-// API client registrations using factory delegates (avoid hardcoded BaseUrl from generated clients).
+// Register NSwag clients with explicit BaseUrl (generated clients have hardcoded localhost in constructor)
 builder.Services.AddTransient<ITopicsClient>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var config = sp.GetRequiredService<IConfiguration>();
-    var url = config.GetValue<string>("ApiUrls:Topics") ?? "http://topics-service:5294";
-    var client = factory.CreateClient();
-    client.BaseAddress = new Uri(url);
-    return new TopicsClient(client) { BaseUrl = url.TrimEnd('/') };
+    var client = factory.CreateClient("TopicsClient");
+    return new TopicsClient(client) { BaseUrl = client.BaseAddress.ToString().TrimEnd('/') };
 });
 
 builder.Services.AddTransient<IUsersClient>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var config = sp.GetRequiredService<IConfiguration>();
-    var url = config.GetValue<string>("ApiUrls:Auth") ?? "http://auth-users-service:5225";
     var client = factory.CreateClient("UsersClient");
-    client.BaseAddress = new Uri(url);
-    return new UsersClient(client) { BaseUrl = url.TrimEnd('/') };
+    return new UsersClient(client) { BaseUrl = client.BaseAddress.ToString().TrimEnd('/') };
 });
 
 builder.Services.AddTransient<ICommentsClient>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var config = sp.GetRequiredService<IConfiguration>();
-    var url = config.GetValue<string>("ApiUrls:Comments") ?? "http://comments-service:5044";
-    var client = factory.CreateClient();
-    client.BaseAddress = new Uri(url);
-    return new CommentsClient(client) { BaseUrl = url.TrimEnd('/') };
+    var client = factory.CreateClient("CommentsClient");
+    return new CommentsClient(client) { BaseUrl = client.BaseAddress.ToString().TrimEnd('/') };
 });
 
-
-// Register authentication service
-builder.Services.AddScoped<AuthService>();
+// Register authentication and refresh services
 builder.Services.AddScoped<CommentRefreshService>();
+
+// Register AdminService using IUsersClient from DI
 builder.Services.AddScoped<IAdminService>(sp =>
 {
-    var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var config = sp.GetRequiredService<IConfiguration>();
-    var url = config.GetValue<string>("ApiUrls:Auth") ?? "http://auth-users-service:5225";
-    var client = factory.CreateClient("UsersClient");
-    client.BaseAddress = new Uri(url);
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var authService = sp.GetRequiredService<AuthService>();
     var usersClient = sp.GetRequiredService<IUsersClient>();
-    return new AdminService(client, authService, usersClient);
+    return new AdminService(httpClientFactory, authService, usersClient);
 });
+
+builder.Logging.AddSeq(builder.Configuration.GetSection("Logging:Seq"));
 
 var app = builder.Build();
 

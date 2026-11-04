@@ -9,11 +9,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5129
-      - ApiUrls__Topics=http://topics-service:5294
-      - ApiUrls__Auth=http://auth-users-service:5225
-      - ApiUrls__Comments=http://comments-service:5044
+      - GatewayUrl=http://gateway-service:5000
     networks:
       - otus-network
+    volumes:
+      - dataprotection-keys:/root/.aspnet/DataProtection-Keys
+
+volumes:
+  dataprotection-keys:
 
 networks:
   otus-network:

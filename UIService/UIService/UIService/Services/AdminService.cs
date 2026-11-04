@@ -15,24 +15,15 @@ public interface IAdminService
 
 public class AdminService : IAdminService
 {
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly AuthService _authService;
     private readonly IUsersClient _usersClient;
 
-    public AdminService(HttpClient httpClient, AuthService authService, IUsersClient usersClient)
+    public AdminService(IHttpClientFactory httpClientFactory, AuthService authService, IUsersClient usersClient)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
         _authService = authService;
         _usersClient = usersClient;
-    }
-
-    private void ApplyAuthHeader(HttpRequestMessage request)
-    {
-        var token = _authService.Token;
-        if (!string.IsNullOrEmpty(token))
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        request.Headers.Add("X-IsAdmin", _authService.IsAdmin.ToString().ToLowerInvariant());
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -40,21 +31,25 @@ public class AdminService : IAdminService
         PropertyNameCaseInsensitive = true
     };
 
+    private HttpClient CreateAuthenticatedClient()
+    {
+        var client = _httpClientFactory.CreateClient("UsersClient");
+        // The AuthHeaderHandler will add the Bearer token
+        return client;
+    }
+
     public async Task<IReadOnlyCollection<UserSearchModel>> SearchUsersAsync(string nicknamePart)
     {
-        var uri = new Uri($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}", UriKind.Relative);
-        var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        ApplyAuthHeader(request);
-        var response = await _httpClient.SendAsync(request);
+        var client = CreateAuthenticatedClient();
+        var response = await client.GetAsync($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}");
         var content = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, JsonOptions) ?? [];
     }
 
     public async Task<UserWithRolesModel> GetUserWithRolesAsync(long userId)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"User/GetWithRoles/{userId}");
-        ApplyAuthHeader(request);
-        var response = await _httpClient.SendAsync(request);
+        var client = CreateAuthenticatedClient();
+        var response = await client.GetAsync($"User/GetWithRoles/{userId}");
         var content = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<UserWithRolesModel>(content, JsonOptions)
             ?? throw new Exception("Failed to load user with roles");
@@ -74,10 +69,8 @@ public class AdminService : IAdminService
 
     public async Task<IReadOnlyCollection<RoleModel>> GetAllRolesAsync()
     {
-        var uri = new Uri("Role/GetAll", UriKind.Relative);
-        var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        ApplyAuthHeader(request);
-        var response = await _httpClient.SendAsync(request);
+        var client = CreateAuthenticatedClient();
+        var response = await client.GetAsync("Role/GetAll");
         var content = await response.Content.ReadAsStringAsync();
         var rolesResponse = JsonSerializer.Deserialize<GetAllRolesResponse>(content, JsonOptions);
         return rolesResponse?.Roles ?? [];
