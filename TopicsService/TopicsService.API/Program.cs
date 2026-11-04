@@ -13,8 +13,6 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
 
-builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-
 builder.Services.AddControllers();
 
 builder.Services.AddGrpcClients();

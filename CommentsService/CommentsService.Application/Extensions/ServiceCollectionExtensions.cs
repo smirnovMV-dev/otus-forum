@@ -1,4 +1,6 @@
+using CommentsService.Application.Services;
 using CommentsService.Application.Services.Externals.UsersApiService;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using OtusForum.AuthUsersService.Grpc;
 
@@ -9,7 +11,11 @@ public static class ServiceCollectionExtensions
     public static void AddApplication(this IServiceCollection services)
     {
         services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
+        {
+            cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
+        services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
 
         services.AddTransient<IUsersApiServiceAdapter, UsersApiServiceAdapter>();
 
