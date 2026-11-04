@@ -41,6 +41,15 @@ builder.Services.AddReverseProxy()
 
 var app = builder.Build();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseCors("AllowUIService");
+
 // Middleware для извлечения User-Id из JWT и прокидывания в заголовке
 app.Use(async (context, next) =>
 {
@@ -70,13 +79,6 @@ app.Use(async (context, next) =>
     await next.Invoke();
 });
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
-app.UseAuthentication();
-app.UseCors("AllowUIService");
 app.MapReverseProxy();
 
 app.Run();

@@ -9,4 +9,9 @@ public interface IUserRoleRepository
     Task<int> CreateAsync(
         UserRole userRole,
         CancellationToken cancellationToken);
+
+    Task RemoveAsync(
+        long userId,
+        long roleId,
+        CancellationToken cancellationToken);
 }

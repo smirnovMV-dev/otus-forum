@@ -67,6 +67,17 @@ builder.Services.AddTransient<ICommentsClient>(sp =>
 // Register authentication service
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CommentRefreshService>();
+builder.Services.AddScoped<IAdminService>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var config = sp.GetRequiredService<IConfiguration>();
+    var url = config.GetValue<string>("ApiUrls:Auth") ?? "http://auth-users-service:5225";
+    var client = factory.CreateClient("UsersClient");
+    client.BaseAddress = new Uri(url);
+    var authService = sp.GetRequiredService<AuthService>();
+    var usersClient = sp.GetRequiredService<IUsersClient>();
+    return new AdminService(client, authService, usersClient);
+});
 
 var app = builder.Build();
 

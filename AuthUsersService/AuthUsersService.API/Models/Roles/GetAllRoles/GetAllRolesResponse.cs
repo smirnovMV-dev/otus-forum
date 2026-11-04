@@ -1,4 +1,3 @@
-using AuthUsersService.Domain;
 using System.Collections.Generic;
 
 namespace AuthUsersService.API.Models.Roles.GetAllRoles;
@@ -11,5 +10,5 @@ public sealed class GetAllRolesResponse
 public sealed class RoleModel
 {
     public long Id { get; init; }
-    public RoleName Name { get; init; }
+    public required string Name { get; init; }
 }

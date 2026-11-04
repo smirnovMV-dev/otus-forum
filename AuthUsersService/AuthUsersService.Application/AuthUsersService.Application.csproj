@@ -6,6 +6,8 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="MediatR" />
 	<PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />

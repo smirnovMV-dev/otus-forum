@@ -35,4 +35,8 @@ public interface IUserRepository
         long userId,
         string newPasswordHash,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<UserSearchModel>> SearchByNicknameAsync(
+        string nicknamePart,
+        CancellationToken cancellationToken);
 }

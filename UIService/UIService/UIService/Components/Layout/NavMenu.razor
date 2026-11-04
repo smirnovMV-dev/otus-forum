@@ -58,6 +58,17 @@
         @if (AuthService.IsAuthenticated)
         {
             <div class="dropdown-divider"></div>
+
+            @if (AuthService.IsAdmin)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/admin">
+                        <span class="bi bi-shield-lock" aria-hidden="true"></span>Админка
+                    </NavLink>
+                </div>
+                <div class="dropdown-divider"></div>
+            }
+
             <div class="nav-item px-3">
                 <button class="nav-link logout-btn" @onclick="Logout" title="Выйти">
                     <span class="bi bi-box-arrow-up" aria-hidden="true"></span>Выход

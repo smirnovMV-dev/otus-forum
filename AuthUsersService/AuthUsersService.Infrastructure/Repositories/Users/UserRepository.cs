@@ -132,4 +132,28 @@ internal sealed class UserRepository : IUserRepository
         user.PasswordHash = newPasswordHash;
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyCollection<UserSearchModel>> SearchByNicknameAsync(
+        string nicknamePart,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(nicknamePart))
+            return [];
+
+        try
+        {
+            var results = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Nickname.Contains(nicknamePart))
+                .Select(u => new UserSearchModel(u.Id, u.Nickname, u.Email))
+                .ToListAsync(cancellationToken);
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching users by nickname: {NicknamePart}", nicknamePart);
+            return [];
+        }
+    }
 }

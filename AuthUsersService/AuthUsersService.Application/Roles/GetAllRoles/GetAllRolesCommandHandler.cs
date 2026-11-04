@@ -12,7 +12,7 @@ public sealed record GetAllRolesCommand() : IRequest<IReadOnlyCollection<RoleDto
 public sealed record RoleDto
 {
     public long Id { get; init; }
-    public RoleName Name { get; init; }
+    public required string Name { get; init; }
 }
 
 internal sealed class GetAllRolesCommandHandler : IRequestHandler<GetAllRolesCommand, IReadOnlyCollection<RoleDto>>
@@ -35,7 +35,7 @@ internal sealed class GetAllRolesCommandHandler : IRequestHandler<GetAllRolesCom
             .Select(r => new RoleDto
             {
                 Id = r.Id,
-                Name = r.Name
+                Name = r.Name.ToString()
             })
             .ToList();
     }

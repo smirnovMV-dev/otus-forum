@@ -4,6 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.83.0" />
     <PackageVersion Include="MediatR" Version="14.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />

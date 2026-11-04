@@ -2,13 +2,20 @@ using AuthUsersService.API.Models.Auth;
 using AuthUsersService.API.Models.Users.AssignUserRole;
 using AuthUsersService.API.Models.Users.ChangePassword;
 using AuthUsersService.API.Models.Users.RegisterUser;
+using AuthUsersService.API.Models.Users.RemoveUserRole;
 using AuthUsersService.Application.Auth.LoginUser;
+using AuthUsersService.Application.Roles.GetAllRoles;
+using AuthUsersService.Application.Users;
 using AuthUsersService.Application.Users.AssignUserRole;
 using AuthUsersService.Application.Users.ChangePassword;
 using AuthUsersService.Application.Users.CountUsers;
+using AuthUsersService.Application.Users.GetUserWithRoles;
 using AuthUsersService.Application.Users.RegisterUser;
+using AuthUsersService.Application.Users.RemoveUserRole;
+using AuthUsersService.Application.Users.SearchUsersByNickname;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace AuthUsersService.API.Controllers;
@@ -84,5 +91,40 @@ public sealed class UserController : ControllerBase
         var command = new ChangePasswordCommand(userId, request.CurrentPassword, request.NewPassword);
         await _mediator.Send(command);
         return new ChangePasswordResponse();
+    }
+
+    [HttpGet("SearchByNickname")]
+    public async Task<IActionResult> SearchByNickname(
+        [FromQuery] string nicknamePart,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
+    {
+        if (!isAdmin)
+            return StatusCode(403);
+
+        var command = new SearchUsersByNicknameQuery(nicknamePart);
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpGet("GetWithRoles/{userId}")]
+    public async Task<IActionResult> GetWithRoles(long userId,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
+    {
+        if (!isAdmin)
+            return StatusCode(403);
+
+        var command = new GetUserWithRolesQuery(userId);
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpDelete("RemoveRole")]
+    public async Task<IActionResult> RemoveRole(
+        [FromBody] RemoveUserRoleRequest request,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
+    {
+        if (!isAdmin)
+            return StatusCode(403);
+
+        var command = new RemoveUserRoleCommand(request.UserId, request.RoleId);
+        return Ok(await _mediator.Send(command));
     }
 }
