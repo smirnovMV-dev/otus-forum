@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TopicsService.Application.Extensions;
 using TopicsService.Infrastructure.Extensions;
 
@@ -17,6 +18,8 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.AddControllers();
 
 builder.Services.AddGrpcClients();
+
+builder.Logging.AddSeq(builder.Configuration.GetSection("Logging:Seq"));
 
 var app = builder.Build();
 app.ApplyMigrations();
