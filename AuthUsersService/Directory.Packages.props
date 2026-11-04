@@ -23,6 +23,7 @@
     <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageVersion Include="Seq.Extensions.Logging" Version="9.0.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
   </ItemGroup>
 </Project>

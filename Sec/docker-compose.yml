@@ -1,0 +1,21 @@
+services:
+  seq:
+    image: datalust/seq:latest
+    container_name: seq_server
+    ports:
+      - "5341:80"
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    volumes:
+      - seq_data:/data
+    restart: unless-stopped
+    networks:
+      - otus-network
+
+volumes:
+  seq_data:
+
+networks:
+  otus-network:
+    external: true

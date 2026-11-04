@@ -3,6 +3,7 @@ using AuthUsersService.Application.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,8 @@ builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddGrpcReflection();
 
 builder.Services.AddControllers();
+
+builder.Logging.AddSeq(builder.Configuration.GetSection("Logging:Seq"));
 
 var app = builder.Build();
 app.ApplyMigrations();
