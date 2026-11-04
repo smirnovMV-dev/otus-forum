@@ -39,6 +39,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
+builder.Logging.AddSeq(builder.Configuration.GetSection("Logging:Seq"));
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
