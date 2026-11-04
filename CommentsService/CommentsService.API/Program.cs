@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using CommentsService.Application.Extensions;
 using CommentsService.Infrastructure.Extensions;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,10 +18,11 @@ builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 builder.Services.AddControllers();
 
 builder.Services.AddGrpcClients();
-
 builder.Services.AddGrpc();
 builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddGrpcReflection();
+
+builder.Logging.AddSeq(builder.Configuration.GetSection("Logging:Seq"));
 
 var app = builder.Build();
 
