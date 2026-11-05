@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
-using AuthUsersService.Application.Users;
 using MediatR;
 
 namespace AuthUsersService.Application.Users.SearchUsersByNickname;

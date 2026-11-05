@@ -77,15 +77,6 @@ builder.Services.AddTransient<ICommentsClient>(sp =>
 // Register authentication and refresh services
 builder.Services.AddScoped<CommentRefreshService>();
 
-// Register AdminService using IUsersClient from DI
-builder.Services.AddScoped<IAdminService>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var authService = sp.GetRequiredService<AuthService>();
-    var usersClient = sp.GetRequiredService<IUsersClient>();
-    return new AdminService(httpClientFactory, authService, usersClient);
-});
-
 builder.Logging.AddSeq(builder.Configuration.GetSection("Logging:Seq"));
 
 var app = builder.Build();

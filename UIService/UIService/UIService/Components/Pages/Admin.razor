@@ -1,11 +1,13 @@
 @page "/admin"
-@rendermode InteractiveAuto
+@rendermode InteractiveServer
 @using System.Collections.Generic
+@using System.Net.Http
 @using OtusForum.UI.Clients.Users
-@inject IAdminService AdminService
+@using System.Text.Json
+@inject IUsersClient UsersClient
+@inject IHttpClientFactory HttpClientFactory
 @inject AuthService AuthService
-
-<h3>Администрирование</h3>
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Администрирование</PageTitle>
 
@@ -121,12 +123,28 @@ else
     private IReadOnlyCollection<RoleModel> _allRoles = [];
     private Dictionary<long, IReadOnlyCollection<string>> _userRoles = new();
     private Dictionary<long, string?> _selectedRoles = new();
+    private bool _initialized;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     protected override async Task OnInitializedAsync()
     {
         if (AuthService.IsAdmin)
         {
             await LoadRolesAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_initialized)
+        {
+            _initialized = true;
+            await AuthService.InitializeAsync(JSRuntime);
+            StateHasChanged();
         }
     }
 
@@ -142,7 +160,7 @@ else
 
         try
         {
-            _searchResults = await AdminService.SearchUsersAsync(searchNickname);
+            _searchResults = await SearchUsers(searchNickname);
             _searched = _searchResults.Any();
 
             // Загрузить роли для каждого пользователя
@@ -150,7 +168,7 @@ else
             {
                 try
                 {
-                    var userWithRoles = await AdminService.GetUserWithRolesAsync(user.Id);
+                    var userWithRoles = await GetUserWithRoles(user.Id);
                     _userRoles[user.Id] = userWithRoles.CurrentRoles;
                 }
                 catch
@@ -175,12 +193,38 @@ else
     {
         try
         {
-            _allRoles = await AdminService.GetAllRolesAsync();
+            _allRoles = await GetAllRoles();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка при загрузке ролей: {ex.Message}");
         }
+    }
+
+    private async Task<IReadOnlyCollection<UserSearchModel>> SearchUsers(string nicknamePart)
+    {
+        var client = HttpClientFactory.CreateClient("UsersClient");
+        var response = await client.GetAsync($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}");
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, JsonOptions) ?? [];
+    }
+
+    private async Task<UserWithRolesModel> GetUserWithRoles(long userId)
+    {
+        var client = HttpClientFactory.CreateClient("UsersClient");
+        var response = await client.GetAsync($"User/GetWithRoles/{userId}");
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<UserWithRolesModel>(content, JsonOptions)
+            ?? throw new Exception("Failed to load user with roles");
+    }
+
+    private async Task<IReadOnlyCollection<RoleModel>> GetAllRoles()
+    {
+        var client = HttpClientFactory.CreateClient("UsersClient");
+        var response = await client.GetAsync("Role/GetAll");
+        var content = await response.Content.ReadAsStringAsync();
+        var rolesResponse = JsonSerializer.Deserialize<GetAllRolesResponse>(content, JsonOptions);
+        return rolesResponse?.Roles ?? [];
     }
 
     private async Task AssignRoleAsync(long userId)
@@ -191,11 +235,11 @@ else
 
         try
         {
-            await AdminService.AssignRoleAsync(userId, roleId);
+            await UsersClient.AssignRoleAsync(new AssignUserRoleRequest { UserId = userId, RoleId = roleId });
             _selectedRoles[userId] = null;
 
             // Обновить роли пользователя
-            var userWithRoles = await AdminService.GetUserWithRolesAsync(userId);
+            var userWithRoles = await GetUserWithRoles(userId);
             _userRoles[userId] = userWithRoles.CurrentRoles;
             StateHasChanged();
         }
@@ -213,10 +257,10 @@ else
 
         try
         {
-            await AdminService.RemoveRoleAsync(userId, role.Id);
+            await UsersClient.RemoveRoleAsync(AuthService.IsAdmin, new RemoveUserRoleRequest { UserId = userId, RoleId = role.Id });
 
             // Обновить роли пользователя
-            var userWithRoles = await AdminService.GetUserWithRolesAsync(userId);
+            var userWithRoles = await GetUserWithRoles(userId);
             _userRoles[userId] = userWithRoles.CurrentRoles;
             StateHasChanged();
         }
