@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using TopicsService.API.Middleware;
 using TopicsService.Application.Extensions;
 using TopicsService.Infrastructure.Extensions;
 
@@ -34,6 +35,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapInternalGrpcServices();
 app.UseHttpsRedirection();
+app.UseMiddleware<SecurityExceptionHandlerMiddleware>();
 app.MapControllers();
 
 app.Run();

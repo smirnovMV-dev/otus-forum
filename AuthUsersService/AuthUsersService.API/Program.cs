@@ -1,3 +1,4 @@
+using AuthUsersService.API.Middleware;
 using AuthUsersService.Infrastructure.Extensions;
 using AuthUsersService.Application.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -37,6 +38,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<SecurityExceptionHandlerMiddleware>();
 
 app.MapInternalGrpcServices();
 

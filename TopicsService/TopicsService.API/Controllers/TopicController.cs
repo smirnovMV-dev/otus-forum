@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TopicsService.API.Middleware;
 using TopicsService.API.Models.Topics.CreateTopic;
 using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.API.Models.Topics.GetTopicWithComments;
@@ -107,7 +108,7 @@ public class TopicController : ControllerBase
     }
 
     [HttpPut("{id:long}")]
-    public async Task<IActionResult> Update(
+    public async Task<UpdateTopicResponse> Update(
         long id,
         [FromBody] UpdateTopicRequest request,
         [FromHeader(Name = "X-UserId")] long userId,
@@ -122,11 +123,11 @@ public class TopicController : ControllerBase
             isModerator);
 
         await _mediator.Send(command);
-        return Ok(new UpdateTopicResponse());
+        return new UpdateTopicResponse();
     }
 
     [HttpDelete("{id:long}")]
-    public async Task<IActionResult> Delete(
+    public async Task Delete(
         long id,
         [FromHeader(Name = "X-UserId")] long userId,
         [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
@@ -135,7 +136,6 @@ public class TopicController : ControllerBase
         var command = new DeleteTopicCommand(id, userId, isAdmin, isModerator);
 
         await _mediator.Send(command);
-        return Ok();
     }
 
     [HttpPost("GetByUserId")]

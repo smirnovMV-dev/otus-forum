@@ -1,3 +1,4 @@
+using AuthUsersService.API.Middleware;
 using AuthUsersService.API.Models.Auth;
 using AuthUsersService.API.Models.Users.AssignUserRole;
 using AuthUsersService.API.Models.Users.ChangePassword;
@@ -94,37 +95,37 @@ public sealed class UserController : ControllerBase
     }
 
     [HttpGet("SearchByNickname")]
-    public async Task<IActionResult> SearchByNickname(
+    public async Task<IReadOnlyCollection<UserSearchModel>> SearchByNickname(
         [FromQuery] string nicknamePart,
         [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
     {
         if (!isAdmin)
-            return StatusCode(403);
+            throw new SecurityException();
 
         var command = new SearchUsersByNicknameQuery(nicknamePart);
-        return Ok(await _mediator.Send(command));
+        return await _mediator.Send(command);
     }
 
     [HttpGet("GetWithRoles/{userId}")]
-    public async Task<IActionResult> GetWithRoles(long userId,
+    public async Task<UserWithRolesModel> GetWithRoles(long userId,
         [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
     {
         if (!isAdmin)
-            return StatusCode(403);
+            throw new SecurityException();
 
         var command = new GetUserWithRolesQuery(userId);
-        return Ok(await _mediator.Send(command));
+        return await _mediator.Send(command);
     }
 
     [HttpDelete("RemoveRole")]
-    public async Task<IActionResult> RemoveRole(
+    public async Task RemoveRole(
         [FromBody] RemoveUserRoleRequest request,
         [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
     {
         if (!isAdmin)
-            return StatusCode(403);
+            throw new SecurityException();
 
         var command = new RemoveUserRoleCommand(request.UserId, request.RoleId);
-        return Ok(await _mediator.Send(command));
+        await _mediator.Send(command);
     }
 }

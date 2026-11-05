@@ -1,10 +1,6 @@
 @page "/admin"
 @rendermode InteractiveServer
-@using System.Collections.Generic
-@using System.Net.Http
 @using OtusForum.UI.Clients.Users
-@using System.Text.Json
-@inject IUsersClient UsersClient
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthService AuthService
 @inject IJSRuntime JSRuntime
@@ -36,6 +32,13 @@ else
         </div>
     </div>
 
+    @if (_errorMessage is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
+        </div>
+    }
+
     @if (_searching)
     {
         <div class="text-center my-4">
@@ -44,63 +47,17 @@ else
             </div>
         </div>
     }
-    else if (_searchResults.Any())
+    else if (_searchResults.Count > 0)
     {
         <div class="row g-3">
             @foreach (var user in _searchResults)
             {
-                <div class="col-12">
+                <div class="col-12" key="@user.Id">
                     <div class="card user-card">
                         <div class="card-header d-flex align-items-center">
                             <i class="bi bi-person-circle me-2 fs-5"></i>
                             <span class="fw-bold">@user.Nickname</span>
                             <span class="text-muted ms-2 small">(@user.Email)</span>
-                        </div>
-                        <div class="card-body">
-                            <!-- Текущие роли -->
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Текущие роли:</label>
-                                @if (_userRoles.TryGetValue(user.Id, out var roles) && roles.Any())
-                                {
-                                    <div class="d-flex flex-wrap gap-2">
-                                        @foreach (var roleName in roles)
-                                        {
-                                            <span class="badge bg-primary d-flex align-items-center">
-                                                @roleName
-                                                <button class="btn btn-sm btn-outline-light ms-2 py-0" 
-                                                        title="Снять роль"
-                                                        @onclick="() => RemoveRoleAsync(user.Id, roleName)"
-                                                        style="font-size: 0.75rem; line-height: 1;">
-                                                    &times;
-                                                </button>
-                                            </span>
-                                        }
-                                    </div>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">Ролей нет</span>
-                                }
-                            </div>
-
-                            <!-- Назначение роли -->
-                            <div class="d-flex gap-2 align-items-end">
-                                <div class="flex-grow-1">
-                                    <label class="form-label mb-1 small text-muted">Назначить роль:</label>
-                                    <select class="form-select" @bind="_selectedRoles[user.Id]">
-                                        <option value="">-- Выберите роль --</option>
-                                        @foreach (var role in _allRoles)
-                                        {
-                                            <option value="@role.Id">@role.Name</option>
-                                        }
-                                    </select>
-                                </div>
-                                <button class="btn btn-success" 
-                                        @onclick="() => AssignRoleAsync(user.Id)"
-                                        disabled="@string.IsNullOrEmpty(_selectedRoles.GetValueOrDefault(user.Id))">
-                                    <i class="bi bi-person-plus me-1"></i>Назначить
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -119,23 +76,14 @@ else
     private string searchNickname = string.Empty;
     private bool _searching = false;
     private bool _searched = false;
+    private string? _errorMessage;
     private IReadOnlyCollection<UserSearchModel> _searchResults = [];
-    private IReadOnlyCollection<RoleModel> _allRoles = [];
-    private Dictionary<long, IReadOnlyCollection<string>> _userRoles = new();
-    private Dictionary<long, string?> _selectedRoles = new();
+    private HttpClient? _usersClient;
     private bool _initialized;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    protected override void OnInitialized()
     {
-        PropertyNameCaseInsensitive = true
-    };
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (AuthService.IsAdmin)
-        {
-            await LoadRolesAsync();
-        }
+        _usersClient = HttpClientFactory.CreateClient("UsersClient");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -156,143 +104,49 @@ else
         _searching = true;
         _searched = false;
         _searchResults = [];
-        StateHasChanged();
+        _errorMessage = null;
+        await InvokeAsync(StateHasChanged);
 
         try
         {
             _searchResults = await SearchUsers(searchNickname);
-            _searched = _searchResults.Any();
-
-            // Загрузить роли для каждого пользователя
-            foreach (var user in _searchResults)
-            {
-                try
-                {
-                    var userWithRoles = await GetUserWithRoles(user.Id);
-                    _userRoles[user.Id] = userWithRoles.CurrentRoles;
-                }
-                catch
-                {
-                    _userRoles[user.Id] = [];
-                }
-            }
+            _searched = _searchResults.Count > 0;
+        }
+        catch (HttpRequestException ex)
+        {
+            _errorMessage = $"Ошибка сети при поиске пользователей: {ex.Message}";
+            _searchResults = [];
+        }
+        catch (JsonException ex)
+        {
+            _errorMessage = $"Ошибка обработки ответа сервера: {ex.Message}";
+            _searchResults = [];
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при поиске пользователей: {ex.Message}");
+            _errorMessage = $"Произошла ошибка при поиске пользователей: {ex.Message}";
             _searchResults = [];
         }
         finally
         {
             _searching = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task LoadRolesAsync()
-    {
-        try
-        {
-            _allRoles = await GetAllRoles();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при загрузке ролей: {ex.Message}");
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private async Task<IReadOnlyCollection<UserSearchModel>> SearchUsers(string nicknamePart)
     {
-        var client = HttpClientFactory.CreateClient("UsersClient");
-        var response = await client.GetAsync($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}");
+        var response = await _usersClient!.GetAsync($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}");
+        response.EnsureSuccessStatusCode();
+
         var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, JsonOptions) ?? [];
-    }
-
-    private async Task<UserWithRolesModel> GetUserWithRoles(long userId)
-    {
-        var client = HttpClientFactory.CreateClient("UsersClient");
-        var response = await client.GetAsync($"User/GetWithRoles/{userId}");
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<UserWithRolesModel>(content, JsonOptions)
-            ?? throw new Exception("Failed to load user with roles");
-    }
-
-    private async Task<IReadOnlyCollection<RoleModel>> GetAllRoles()
-    {
-        var client = HttpClientFactory.CreateClient("UsersClient");
-        var response = await client.GetAsync("Role/GetAll");
-        var content = await response.Content.ReadAsStringAsync();
-        var rolesResponse = JsonSerializer.Deserialize<GetAllRolesResponse>(content, JsonOptions);
-        return rolesResponse?.Roles ?? [];
-    }
-
-    private async Task AssignRoleAsync(long userId)
-    {
-        var roleIdStr = _selectedRoles.GetValueOrDefault(userId);
-        if (string.IsNullOrEmpty(roleIdStr) || !long.TryParse(roleIdStr, out var roleId))
-            return;
-
-        try
-        {
-            await UsersClient.AssignRoleAsync(new AssignUserRoleRequest { UserId = userId, RoleId = roleId });
-            _selectedRoles[userId] = null;
-
-            // Обновить роли пользователя
-            var userWithRoles = await GetUserWithRoles(userId);
-            _userRoles[userId] = userWithRoles.CurrentRoles;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при назначении роли: {ex.Message}");
-        }
-    }
-
-    private async Task RemoveRoleAsync(long userId, string roleName)
-    {
-        var role = _allRoles.FirstOrDefault(r => r.Name == roleName);
-        if (role == null)
-            return;
-
-        try
-        {
-            await UsersClient.RemoveRoleAsync(AuthService.IsAdmin, new RemoveUserRoleRequest { UserId = userId, RoleId = role.Id });
-
-            // Обновить роли пользователя
-            var userWithRoles = await GetUserWithRoles(userId);
-            _userRoles[userId] = userWithRoles.CurrentRoles;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при снятии роли: {ex.Message}");
-        }
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, jsonOptions) ?? [];
     }
 }
 
 <style>
     .user-card {
         border-left: 4px solid #0d6efd;
-    }
-
-    .user-card .badge {
-        font-size: 0.9rem;
-        padding: 0.4em 0.8em;
-    }
-
-    .user-card .badge button {
-        border: none;
-        background: none;
-        color: inherit;
-        padding: 0;
-        margin: 0;
-        font-weight: bold;
-        cursor: pointer;
-        opacity: 0.8;
-    }
-
-    .user-card .badge button:hover {
-        opacity: 1;
     }
 </style>

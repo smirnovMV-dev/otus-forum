@@ -1,3 +1,4 @@
+using AuthUsersService.API.Middleware;
 using AuthUsersService.API.Models.Roles.CreateRole;
 using AuthUsersService.API.Models.Roles.GetAllRoles;
 using AuthUsersService.Application.Roles.CountRoles;
@@ -41,11 +42,11 @@ public sealed class RoleController : ControllerBase
     }
 
     [HttpGet("GetAll")]
-    public async Task<IActionResult> GetAll(
+    public async Task<GetAllRolesResponse> GetAll(
         [FromHeader(Name = "X-IsAdmin")] bool isAdmin)
     {
         if (!isAdmin)
-            return Forbid();
+            throw new SecurityException();
 
         var command = new GetAllRolesCommand();
         var roles = await _mediator.Send(command);
@@ -58,6 +59,6 @@ public sealed class RoleController : ControllerBase
             })
             .ToList();
 
-        return Ok(new GetAllRolesResponse { Roles = models });
+        return new GetAllRolesResponse { Roles = models };
     }
 }
