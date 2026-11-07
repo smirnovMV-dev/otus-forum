@@ -32,7 +32,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(builder.Configuration.GetValue<string[]>("Cors:AllowedOrigins") ?? new[] { "https://localhost:7126" })
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 

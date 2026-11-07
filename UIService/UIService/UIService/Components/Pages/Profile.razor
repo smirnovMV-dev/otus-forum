@@ -9,6 +9,7 @@
 @inject IUsersClient UsersClient
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@inject ILogger<Profile> _logger
 
 <PageTitle>Профиль</PageTitle>
 
@@ -332,7 +333,7 @@
         {
             _topics = [];
             _totalTopicsCount = 0;
-            Console.WriteLine($"Ошибка при получении тем: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при получении тем пользователя {UserId}", AuthService.UserId);
         }
         finally
         {
@@ -368,7 +369,7 @@
         {
             _comments = [];
             _totalCommentsCount = 0;
-            Console.WriteLine($"Ошибка при получении комментариев: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при получении комментариев пользователя {UserId}", AuthService.UserId);
         }
         finally
         {

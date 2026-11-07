@@ -10,6 +10,7 @@
 @inject UIService.Services.CommentRefreshService CommentRefreshService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject ILogger<TopicWithComments> _logger
 
 <PageTitle>@_topicWithComments?.Title</PageTitle>
 
@@ -296,7 +297,7 @@ else
     {
         if (!_initialized)
         {
-            await AuthService.InitializeAsync(JSRuntime);
+            await AuthService.InitializeAsync();
             _initialized = true;
             await LoadTopicWithCommentsAsync();
             StateHasChanged();
@@ -321,7 +322,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при получении темы с комментариями: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при получении темы {TopicId}", TopicId);
             _topicWithComments = null;
         }
         finally
@@ -476,7 +477,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при удалении темы: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при удалении темы {TopicId}", TopicId);
             await JSRuntime.InvokeVoidAsync("alert", $"Не удалось удалить тему: {ex.Message}");
         }
         finally

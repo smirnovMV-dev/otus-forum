@@ -1,6 +1,9 @@
+using AuthUsersService.Application.Auth.RefreshToken;
 using AuthUsersService.Application.Roles;
 using AuthUsersService.Application.Users;
+using AuthUsersService.Domain;
 using AuthUsersService.Infrastructure.Data;
+using AuthUsersService.Infrastructure.Repositories;
 using AuthUsersService.Infrastructure.Repositories.Roles;
 using AuthUsersService.Infrastructure.Repositories.UserRoles;
 using AuthUsersService.Infrastructure.Repositories.Users;
@@ -31,6 +34,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<RefreshTokenService>();
 
         return services;
     }

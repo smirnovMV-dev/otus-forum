@@ -3,6 +3,7 @@
 @using System.Collections.Generic
 @using OtusForum.UI.Clients.Topics
 @inject OtusForum.UI.Clients.Topics.ITopicsClient TopicsService
+@inject ILogger<Topics> _logger
 
 <h3>Темы</h3>
 
@@ -80,7 +81,7 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при получении списка тем: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при получении списка тем (страница {Page})", page);
             _latestTopics = Array.Empty<LatestTopicsResponse>();
             await InvokeAsync(StateHasChanged);
         }

@@ -94,7 +94,7 @@
     {
         if (!_initialized)
         {
-            await AuthService.InitializeAsync(JSRuntime);
+            await AuthService.InitializeAsync();
             _initialized = true;
             StateHasChanged();
         }

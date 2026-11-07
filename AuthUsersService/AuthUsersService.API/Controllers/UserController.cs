@@ -5,6 +5,7 @@ using AuthUsersService.API.Models.Users.ChangePassword;
 using AuthUsersService.API.Models.Users.RegisterUser;
 using AuthUsersService.API.Models.Users.RemoveUserRole;
 using AuthUsersService.Application.Auth.LoginUser;
+using AuthUsersService.Application.Auth.RefreshToken;
 using AuthUsersService.Application.Roles.GetAllRoles;
 using AuthUsersService.Application.Users;
 using AuthUsersService.Application.Users.AssignUserRole;
@@ -14,9 +15,14 @@ using AuthUsersService.Application.Users.GetUserWithRoles;
 using AuthUsersService.Application.Users.RegisterUser;
 using AuthUsersService.Application.Users.RemoveUserRole;
 using AuthUsersService.Application.Users.SearchUsersByNickname;
+using AuthUsersService.Domain;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AuthUsersService.API.Controllers;
@@ -67,6 +73,17 @@ public sealed class UserController : ControllerBase
             request.Password);
 
         var result = await _mediator.Send(command);
+
+        // Set httpOnly cookie with refresh token
+        Response.Cookies.Append("refresh_token", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddDays(7),
+            Path = "/"
+        });
+
         return new LoginResponse
         {
             Token = result.Token,
@@ -75,6 +92,64 @@ public sealed class UserController : ControllerBase
             IsAdmin = result.IsAdmin,
             IsModerator = result.IsModerator
         };
+    }
+
+    [HttpPost("Refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        var refreshTokenCookie = Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(refreshTokenCookie))
+        {
+            return Unauthorized(new { message = "No refresh token found." });
+        }
+
+        // Get userId from JWT header (set by GatewayService middleware)
+        if (!long.TryParse(Request.Headers["X-UserId"], out var userId))
+        {
+            return Unauthorized(new { message = "Invalid user identity." });
+        }
+
+        var refreshTokenService = HttpContext.RequestServices.GetRequiredService<RefreshTokenService>();
+        var result = await refreshTokenService.RefreshAsync(refreshTokenCookie, userId, CancellationToken.None);
+
+        if (!result.IsSuccess)
+        {
+            return Unauthorized(new { message = result.Error });
+        }
+
+        return Ok(new { token = result.Token });
+    }
+
+    [HttpPost("Revoke")]
+    public async Task<IActionResult> Revoke()
+    {
+        var refreshTokenCookie = Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(refreshTokenCookie))
+        {
+            return Ok(new { message = "No token to revoke." });
+        }
+
+        var refreshTokenService = HttpContext.RequestServices.GetRequiredService<RefreshTokenService>();
+        await refreshTokenService.RevokeAsync(refreshTokenCookie, CancellationToken.None);
+
+        Response.Cookies.Delete("refresh_token");
+
+        return Ok(new { message = "Logged out successfully." });
+    }
+
+    [HttpGet("Me")]
+    public async Task<IActionResult> Me()
+    {
+        var refreshTokenCookie = Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(refreshTokenCookie))
+        {
+            return Ok(new { isAuthenticated = false });
+        }
+
+        var refreshTokenService = HttpContext.RequestServices.GetRequiredService<RefreshTokenService>();
+        var isValid = await refreshTokenService.IsSessionValidAsync(refreshTokenCookie, CancellationToken.None);
+
+        return Ok(new { isAuthenticated = isValid });
     }
 
     [HttpGet("CountUsers")]

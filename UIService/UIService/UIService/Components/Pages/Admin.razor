@@ -80,6 +80,7 @@ else
     private IReadOnlyCollection<UserSearchModel> _searchResults = [];
     private HttpClient? _usersClient;
     private bool _initialized;
+    private JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     protected override void OnInitialized()
     {
@@ -91,7 +92,7 @@ else
         if (!_initialized)
         {
             _initialized = true;
-            await AuthService.InitializeAsync(JSRuntime);
+            await AuthService.InitializeAsync();
             StateHasChanged();
         }
     }
@@ -139,9 +140,8 @@ else
         var response = await _usersClient!.GetAsync($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}");
         response.EnsureSuccessStatusCode();
 
-        var content = await response.Content.ReadAsStringAsync();
-        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, jsonOptions) ?? [];
+        var content = await response.Content.ReadAsStringAsync();        
+        return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, _jsonOptions) ?? [];
     }
 }
 
