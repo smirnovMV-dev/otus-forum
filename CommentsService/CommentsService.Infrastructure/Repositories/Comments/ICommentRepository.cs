@@ -22,6 +22,10 @@ public interface ICommentRepository
         DateTimeOffset deletedAt,
         CancellationToken cancellationToken);
 
+    Task<Comment?> GetByIdAsync(
+        long commentId,
+        CancellationToken cancellationToken);
+
     Task<PagedCommentsResult> GetByUserIdAsync(
         long userId,
         int page,

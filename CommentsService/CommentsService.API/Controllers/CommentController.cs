@@ -7,6 +7,7 @@ using CommentsService.Application.Comments.DeleteComment;
 using CommentsService.Application.Comments.GetCommentsByUserId;
 using CommentsService.Application.Comments.UpdateComment;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ public class CommentController : ControllerBase
         _mediator = mediator;
     }
 
+    [Authorize]
     [HttpPost(nameof(Create))]
     public async Task<CreateCommentResponse> Create(
         [FromBody] CreateCommentRequest request,
@@ -44,6 +46,7 @@ public class CommentController : ControllerBase
         return new CreateCommentResponse();
     }
 
+    [Authorize]
     [HttpPut(nameof(Update))]
     public async Task<UpdateCommentResponse> Update(
         long id,
@@ -66,11 +69,15 @@ public class CommentController : ControllerBase
         return new UpdateCommentResponse();
     }
 
+    [Authorize]
     [HttpDelete(nameof(Delete))]
     public async Task<DeleteCommentResponse> Delete(
-        long id)
+        long id,
+        [FromHeader(Name = "X-UserId")] long userId,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
+        [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
     {
-        var command = new DeleteCommentCommand(id);
+        var command = new DeleteCommentCommand(id, userId, isAdmin, isModerator);
 
         await _mediator.Send(command);
 

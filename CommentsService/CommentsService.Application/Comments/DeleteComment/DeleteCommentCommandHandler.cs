@@ -1,3 +1,4 @@
+using CommentsService.Domain.Exceptions;
 using CommentsService.Infrastructure.Repositories.Comments;
 using MediatR;
 using System;
@@ -7,7 +8,10 @@ using System.Threading.Tasks;
 namespace CommentsService.Application.Comments.DeleteComment;
 
 public sealed record DeleteCommentCommand(
-    long CommentId) : IRequest<int>;
+    long CommentId,
+    long UserId,
+    bool IsAdmin,
+    bool IsModerator) : IRequest<int>;
 
 internal sealed class DeleteCommentCommandHandler : IRequestHandler<DeleteCommentCommand, int>
 {
@@ -23,6 +27,22 @@ internal sealed class DeleteCommentCommandHandler : IRequestHandler<DeleteCommen
         DeleteCommentCommand command,
         CancellationToken cancellationToken)
     {
+        var comment = await _commentRepository.GetByIdAsync(command.CommentId, cancellationToken);
+
+        if (comment is null)
+        {
+            return -1;
+        }
+
+        var canDelete = command.IsAdmin
+            || command.IsModerator
+            || comment.AuthorId == command.UserId;
+
+        if (!canDelete)
+        {
+            throw new ForbiddenOperationException("Удалять можно только свои комментарии.");
+        }
+
         return await _commentRepository.SoftDeleteAsync(
             command.CommentId,
             DateTimeOffset.UtcNow,

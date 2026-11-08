@@ -1,142 +1,375 @@
-using System.Globalization;
-using System.Text;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.JSInterop;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace UIService.Services;
 
-public class AuthService
+public sealed class AuthService
 {
-    private readonly IJSRuntime _jsRuntime;
+    private const string RefreshTokenStorageKey = "auth:refresh";
+    private const string RefreshUri = "User/Refresh";
+    private const string RevokeUri = "User/Revoke";
+    private const string MeUri = "User/Me";
+    private const string RefreshClientName = "AuthRefreshClient";
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ProtectedLocalStorage _protectedLocalStorage;
     private readonly ILogger<AuthService> _logger;
-    private long? _userId;
-    private string? _accessToken;
-    private string? _nickname;
-    private bool _isAdmin;
-    private bool _isModerator;
 
-    public event Action? OnChanged;
+    private string? _refreshToken;
+    private Task<string?>? _refreshTask;
 
-    public long? UserId => _userId;
-    public string? AccessToken => _accessToken;
-    public string? Nickname => _nickname;
-    public bool IsAuthenticated => _userId.HasValue && _userId > 0 && !string.IsNullOrEmpty(_accessToken);
-    public bool IsAdmin => _isAdmin;
-    public bool IsModerator => _isModerator;
-
-    public AuthService(IJSRuntime jsRuntime, ILogger<AuthService> logger)
+    public AuthService(
+        IHttpClientFactory httpClientFactory,
+        ProtectedLocalStorage protectedLocalStorage,
+        ILogger<AuthService> logger)
     {
-        _jsRuntime = jsRuntime;
+        _httpClientFactory = httpClientFactory;
+        _protectedLocalStorage = protectedLocalStorage;
         _logger = logger;
     }
 
+    public event Action? OnChanged;
+
+    public long? UserId { get; private set; }
+    public string? AccessToken { get; private set; }
+    public string? Nickname { get; private set; }
+    public bool IsAdmin { get; private set; }
+    public bool IsModerator { get; private set; }
+
+    public bool HasRefreshToken => !string.IsNullOrEmpty(_refreshToken);
+    public bool IsAuthenticated => UserId.HasValue && UserId > 0 && !string.IsNullOrEmpty(AccessToken);
+
+    /// <summary>
+    /// Восстанавливает сессию после перезагрузки страницы: обменивает сохранённый
+    /// refresh-токен на новую пару токенов и перечитывает профиль пользователя.
+    /// </summary>
     public async Task InitializeAsync()
     {
-        try
+        if (IsAuthenticated)
         {
-            var userId = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", "authUserId");
-            var nickname = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", "authNickname");
-            var isAdmin = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", "authIsAdmin");
-            var isModerator = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", "authIsModerator");
-
-            if (!string.IsNullOrEmpty(userId) && long.TryParse(userId, out var parsedUserId))
-            {
-                _userId = parsedUserId;
-                _nickname = nickname;
-                _isAdmin = bool.TryParse(isAdmin, out var parsedAdmin) && parsedAdmin;
-                _isModerator = bool.TryParse(isModerator, out var parsedModerator) && parsedModerator;
-                
-                // Token will be set when user logs in or when refresh happens
-                // If we have user data but no token, the user might have been logged out on server side
-                // AuthHeaderHandler will handle 401 and clear state
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Не удалось инициализировать авторизацию");
-        }
-    }
-
-    public async Task SetUserAsync(long userId, string accessToken, string nickname, bool isAdmin = false, bool isModerator = false)
-    {
-        // Validate JWT expiration before setting
-        if (!string.IsNullOrEmpty(accessToken) && IsJwtExpired(accessToken))
-        {
-            _logger.LogWarning("Access token is already expired, not setting user");
             return;
         }
 
-        _userId = userId;
-        _accessToken = accessToken;
-        _nickname = nickname;
-        _isAdmin = isAdmin;
-        _isModerator = isModerator;
+        try
+        {
+            var stored = await _protectedLocalStorage.GetAsync<string>(RefreshTokenStorageKey);
 
-        // Save user info to localStorage (without token)
-        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authUserId", userId.ToString());
-        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authNickname", nickname);
-        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authIsAdmin", isAdmin.ToString());
-        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authIsModerator", isModerator.ToString());
+            if (!stored.Success || string.IsNullOrWhiteSpace(stored.Value))
+            {
+                return;
+            }
 
-        OnChanged?.Invoke();
+            _refreshToken = stored.Value;
+
+            var accessToken = await RefreshAsync();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                return;
+            }
+
+            await RestoreProfileAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не удалось восстановить сессию пользователя.");
+        }
     }
 
+    public async Task SetUserAsync(
+        long userId,
+        string accessToken,
+        string? refreshToken,
+        string nickname,
+        bool isAdmin,
+        bool isModerator)
+    {
+        UserId = userId;
+        AccessToken = accessToken;
+        Nickname = nickname;
+        IsAdmin = isAdmin;
+        IsModerator = isModerator;
+        _refreshToken = refreshToken;
+
+        if (!string.IsNullOrWhiteSpace(refreshToken))
+        {
+            await PersistRefreshTokenAsync(refreshToken);
+        }
+
+        NotifyChanged();
+    }
+
+    /// <summary>
+    /// Обновляет access-токен (single-flight: параллельные вызовы ждут один запрос).
+    /// Возвращает новый access-токен либо <c>null</c>, если обновление невозможно.
+    /// </summary>
+    public async Task<string?> RefreshAsync(CancellationToken cancellationToken = default)
+    {
+        var runningRefresh = _refreshTask;
+
+        if (runningRefresh is not null)
+        {
+            return await runningRefresh;
+        }
+
+        var refreshTask = RefreshInternalAsync(cancellationToken);
+        _refreshTask = refreshTask;
+
+        try
+        {
+            return await refreshTask;
+        }
+        finally
+        {
+            _refreshTask = null;
+        }
+    }
+
+    /// <summary>
+    /// Отзывает refresh-токен на сервере и очищает локальное состояние.
+    /// </summary>
+    public async Task LogoutAsync(CancellationToken cancellationToken = default)
+    {
+        var refreshToken = _refreshToken;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                using var client = _httpClientFactory.CreateClient(RefreshClientName);
+                using var response = await client.PostAsJsonAsync(
+                    RevokeUri,
+                    new RefreshRequestBody { RefreshToken = refreshToken },
+                    JsonOptions,
+                    cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning(
+                        "Не удалось отозвать refresh-токен: {StatusCode}.",
+                        response.StatusCode);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or NotSupportedException)
+        {
+            _logger.LogWarning(ex, "Ошибка при отзыве refresh-токена.");
+        }
+        finally
+        {
+            await ClearAsync();
+        }
+    }
+
+    /// <summary>
+    /// Очищает локальное состояние пользователя и удаляет refresh-токен из хранилища браузера.
+    /// </summary>
     public async Task ClearAsync()
     {
-        _userId = null;
-        _accessToken = null;
-        _nickname = null;
-        _isAdmin = false;
-        _isModerator = false;
+        UserId = null;
+        AccessToken = null;
+        Nickname = null;
+        IsAdmin = false;
+        IsModerator = false;
+        _refreshToken = null;
 
-        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authUserId");
-        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authNickname");
-        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authIsAdmin");
-        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "authIsModerator");
+        try
+        {
+            await _protectedLocalStorage.DeleteAsync(RefreshTokenStorageKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не удалось удалить refresh-токен из хранилища браузера.");
+        }
 
-        OnChanged?.Invoke();
+        NotifyChanged();
     }
 
-    public void UpdateAccessToken(string newToken)
+    private async Task<string?> RefreshInternalAsync(CancellationToken cancellationToken)
     {
-        _accessToken = newToken;
-        OnChanged?.Invoke();
+        if (!HasRefreshToken)
+        {
+            await LoadRefreshTokenAsync();
+        }
+
+        if (!HasRefreshToken)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var client = _httpClientFactory.CreateClient(RefreshClientName);
+            using var response = await client.PostAsJsonAsync(
+                RefreshUri,
+                new RefreshRequestBody { RefreshToken = _refreshToken },
+                JsonOptions,
+                cancellationToken);
+
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                _logger.LogInformation(
+                    "Сервер отклонил refresh-токен ({StatusCode}); сессия очищается.",
+                    response.StatusCode);
+
+                await ClearAsync();
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Не удалось обновить токен доступа: {StatusCode}.",
+                    response.StatusCode);
+
+                return null;
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<RefreshPayload>(JsonOptions, cancellationToken);
+
+            if (payload is null
+                || string.IsNullOrWhiteSpace(payload.Token)
+                || string.IsNullOrWhiteSpace(payload.RefreshToken))
+            {
+                await ClearAsync();
+                return null;
+            }
+
+            AccessToken = payload.Token;
+            _refreshToken = payload.RefreshToken;
+
+            await PersistRefreshTokenAsync(payload.RefreshToken);
+            NotifyChanged();
+
+            return payload.Token;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or NotSupportedException)
+        {
+            _logger.LogWarning(ex, "Ошибка при обновлении токена доступа.");
+            return null;
+        }
     }
 
-    private bool IsJwtExpired(string token)
+    /// <summary>
+    /// Перечитывает профиль пользователя по текущему refresh-токену.
+    /// Вызывать только после обновления пары токенов: старый токен уже отозван ротацией.
+    /// </summary>
+    private async Task RestoreProfileAsync(CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_refreshToken))
+        {
+            return;
+        }
+
+        try
+        {
+            using var client = _httpClientFactory.CreateClient(RefreshClientName);
+            using var response = await client.PostAsJsonAsync(
+                MeUri,
+                new RefreshRequestBody { RefreshToken = _refreshToken },
+                JsonOptions,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Не удалось получить профиль пользователя: {StatusCode}.",
+                    response.StatusCode);
+
+                await ClearAsync();
+                return;
+            }
+
+            var profile = await response.Content.ReadFromJsonAsync<MePayload>(JsonOptions, cancellationToken);
+
+            if (profile is null || !profile.IsAuthenticated || profile.UserId is null)
+            {
+                await ClearAsync();
+                return;
+            }
+
+            UserId = profile.UserId;
+            Nickname = profile.Nickname;
+            IsAdmin = profile.IsAdmin;
+            IsModerator = profile.IsModerator;
+
+            NotifyChanged();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or NotSupportedException)
+        {
+            _logger.LogWarning(ex, "Ошибка при получении профиля пользователя.");
+        }
+    }
+
+    private async Task LoadRefreshTokenAsync()
     {
         try
         {
-            var parts = token.Split('.');
-            if (parts.Length != 3) return false;
+            var stored = await _protectedLocalStorage.GetAsync<string>(RefreshTokenStorageKey);
 
-            var payload = Base64UrlDecode(parts[1]);
-            using var jsonDoc = JsonDocument.Parse(payload);
-            var root = jsonDoc.RootElement;
-            
-            if (root.TryGetProperty("exp", out var expProperty))
+            if (stored.Success && !string.IsNullOrWhiteSpace(stored.Value))
             {
-                var expTimestamp = expProperty.GetInt64();
-                var expDate = DateTimeOffset.FromUnixTimeSeconds(expTimestamp);
-                return expDate < DateTimeOffset.UtcNow;
+                _refreshToken = stored.Value;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Не удалось проверить expiration JWT токена");
+            _logger.LogWarning(ex, "Не удалось прочитать refresh-токен из хранилища браузера.");
         }
-        
-        return false;
     }
 
-    private static string Base64UrlDecode(string base64Url)
+    private async Task PersistRefreshTokenAsync(string refreshToken)
     {
-        var base64 = base64Url.Replace('-', '+').Replace('_', '/');
-        switch (base64.Length % 4)
+        try
         {
-            case 2: base64 += "=="; break;
-            case 3: base64 += "="; break;
+            await _protectedLocalStorage.SetAsync(RefreshTokenStorageKey, refreshToken);
         }
-        return Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Не удалось сохранить refresh-токен в хранилище браузера.");
+        }
     }
+
+    private void NotifyChanged()
+    {
+        OnChanged?.Invoke();
+    }
+}
+
+internal sealed class RefreshRequestBody
+{
+    [JsonPropertyName("refreshToken")]
+    public string? RefreshToken { get; set; }
+}
+
+internal sealed class RefreshPayload
+{
+    [JsonPropertyName("token")]
+    public string? Token { get; set; }
+
+    [JsonPropertyName("refreshToken")]
+    public string? RefreshToken { get; set; }
+}
+
+internal sealed class MePayload
+{
+    [JsonPropertyName("isAuthenticated")]
+    public bool IsAuthenticated { get; set; }
+
+    [JsonPropertyName("userId")]
+    public long? UserId { get; set; }
+
+    [JsonPropertyName("nickname")]
+    public string? Nickname { get; set; }
+
+    [JsonPropertyName("isAdmin")]
+    public bool IsAdmin { get; set; }
+
+    [JsonPropertyName("isModerator")]
+    public bool IsModerator { get; set; }
 }

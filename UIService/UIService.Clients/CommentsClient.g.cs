@@ -47,12 +47,12 @@ namespace OtusForum.UI.Clients.Comments
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id);
+        System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator);
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id, System.Threading.CancellationToken cancellationToken);
+        System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken);
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
@@ -309,15 +309,15 @@ namespace OtusForum.UI.Clients.Comments
 
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id)
+        public virtual System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator)
         {
-            return DeleteAsync(id, System.Threading.CancellationToken.None);
+            return DeleteAsync(id, x_UserId, x_IsAdmin, x_IsModerator, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<DeleteCommentResponse> DeleteAsync(long? id, long? x_UserId, bool? x_IsAdmin, bool? x_IsModerator, System.Threading.CancellationToken cancellationToken)
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -325,6 +325,15 @@ namespace OtusForum.UI.Clients.Comments
             {
                 using (var request_ = new System.Net.Http.HttpRequestMessage())
                 {
+
+                    if (x_UserId != null)
+                        request_.Headers.TryAddWithoutValidation("X-UserId", ConvertToString(x_UserId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsAdmin != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsAdmin", ConvertToString(x_IsAdmin, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (x_IsModerator != null)
+                        request_.Headers.TryAddWithoutValidation("X-IsModerator", ConvertToString(x_IsModerator, System.Globalization.CultureInfo.InvariantCulture));
                     request_.Method = new System.Net.Http.HttpMethod("DELETE");
                     request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 

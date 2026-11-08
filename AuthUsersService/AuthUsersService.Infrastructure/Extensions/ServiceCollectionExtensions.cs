@@ -2,6 +2,7 @@ using AuthUsersService.Application.Auth.RefreshToken;
 using AuthUsersService.Application.Roles;
 using AuthUsersService.Application.Users;
 using AuthUsersService.Domain;
+using AuthUsersService.Infrastructure.BackgroundServices;
 using AuthUsersService.Infrastructure.Data;
 using AuthUsersService.Infrastructure.Repositories;
 using AuthUsersService.Infrastructure.Repositories.Roles;
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddApplicationDbContext(configuration);
         services.AddRepositories();
+        services.AddHostedService<RefreshTokenCleaner>();
 
         return services;
     }

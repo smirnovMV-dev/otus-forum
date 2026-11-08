@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -23,6 +24,11 @@ public sealed class SecurityExceptionHandlerMiddleware
         {
             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
             await context.Response.WriteAsync("Недостаточно прав");
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            await context.Response.WriteAsync(exception.Message);
         }
     }
 }

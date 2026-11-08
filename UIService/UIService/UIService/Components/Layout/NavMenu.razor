@@ -1,5 +1,4 @@
 @using UIService.Services
-@inject Microsoft.JSInterop.IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -112,7 +111,7 @@
 
     private async Task Logout()
     {
-        await AuthService.ClearAsync();
+        await AuthService.LogoutAsync();
         Navigation.NavigateTo("/");
     }
 

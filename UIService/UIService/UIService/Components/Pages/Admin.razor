@@ -1,9 +1,8 @@
 @page "/admin"
 @rendermode InteractiveServer
 @using OtusForum.UI.Clients.Users
-@inject IHttpClientFactory HttpClientFactory
+@inject IUsersClient UsersClient
 @inject AuthService AuthService
-@inject IJSRuntime JSRuntime
 
 <PageTitle>Администрирование</PageTitle>
 
@@ -78,14 +77,7 @@ else
     private bool _searched = false;
     private string? _errorMessage;
     private IReadOnlyCollection<UserSearchModel> _searchResults = [];
-    private HttpClient? _usersClient;
     private bool _initialized;
-    private JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-    protected override void OnInitialized()
-    {
-        _usersClient = HttpClientFactory.CreateClient("UsersClient");
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -113,6 +105,11 @@ else
             _searchResults = await SearchUsers(searchNickname);
             _searched = _searchResults.Count > 0;
         }
+        catch (OtusForum.UI.Clients.Users.ApiException ex) when (ex.StatusCode is 401 or 403)
+        {
+            _errorMessage = "Недостаточно прав для поиска пользователей. Войдите заново.";
+            _searchResults = [];
+        }
         catch (HttpRequestException ex)
         {
             _errorMessage = $"Ошибка сети при поиске пользователей: {ex.Message}";
@@ -137,11 +134,8 @@ else
 
     private async Task<IReadOnlyCollection<UserSearchModel>> SearchUsers(string nicknamePart)
     {
-        var response = await _usersClient!.GetAsync($"User/SearchByNickname?nicknamePart={Uri.EscapeDataString(nicknamePart)}");
-        response.EnsureSuccessStatusCode();
-
-        var content = await response.Content.ReadAsStringAsync();        
-        return JsonSerializer.Deserialize<IReadOnlyCollection<UserSearchModel>>(content, _jsonOptions) ?? [];
+        var users = await UsersClient.SearchByNicknameAsync(nicknamePart, AuthService.IsAdmin);
+        return users.ToList();
     }
 }
 

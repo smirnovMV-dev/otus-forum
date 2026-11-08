@@ -22,6 +22,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = jwtSettings["Issuer"],
             ValidAudience = jwtSettings["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
             ClockSkew = TimeSpan.Zero
         };
     });
@@ -49,13 +50,18 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseCors("AllowUIService");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("AllowUIService");
 
-// Middleware для извлечения User-Id из JWT и прокидывания в заголовке
+// Middleware для извлечения User-Id из JWT и прокидывания в заголовке.
+// Входящие X-* заголовки клиента не доверяем: всегда удаляем и заполняем только из claims.
 app.Use(async (context, next) =>
 {
+    context.Request.Headers.Remove("X-UserId");
+    context.Request.Headers.Remove("X-IsAdmin");
+    context.Request.Headers.Remove("X-IsModerator");
+
     if (context.User.Identity?.IsAuthenticated == true)
     {
         var userIdClaim = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)

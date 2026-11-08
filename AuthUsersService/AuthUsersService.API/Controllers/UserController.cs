@@ -19,9 +19,11 @@ using AuthUsersService.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,11 +33,30 @@ namespace AuthUsersService.API.Controllers;
 [Route("[controller]")]
 public sealed class UserController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private const string RefreshTokenCookieName = "refresh_token";
 
-    public UserController(IMediator mediator)
+    private readonly IMediator _mediator;
+    private readonly RefreshTokenService _refreshTokenService;
+    private readonly IUserRepository _userRepository;
+    private readonly bool _cookieSecure;
+    private readonly SameSiteMode _cookieSameSite;
+
+    public UserController(
+        IMediator mediator,
+        RefreshTokenService refreshTokenService,
+        IUserRepository userRepository,
+        IConfiguration configuration)
     {
         _mediator = mediator;
+        _refreshTokenService = refreshTokenService;
+        _userRepository = userRepository;
+        _cookieSecure = configuration.GetValue("Auth:Cookie:Secure", true);
+        _cookieSameSite = Enum.TryParse<SameSiteMode>(
+            configuration["Auth:Cookie:SameSite"],
+            ignoreCase: true,
+            out var sameSiteMode)
+            ? sameSiteMode
+            : SameSiteMode.Strict;
     }
 
     [HttpPost(nameof(Register))]
@@ -46,7 +67,7 @@ public sealed class UserController : ControllerBase
             request.Nickname,
             request.Email,
             request.Password);
-        
+
         await _mediator.Send(command);
         return new RegisterUserResponse();
     }
@@ -64,29 +85,24 @@ public sealed class UserController : ControllerBase
         return new AssignUserRoleResponse();
     }
 
+    [EnableRateLimiting("login")]
     [HttpPost("Login")]
     public async Task<LoginResponse> Login(
-        [FromBody] LoginRequest request)
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
     {
         var command = new LoginUserCommand(
             request.Email,
             request.Password);
 
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(command, cancellationToken);
 
-        // Set httpOnly cookie with refresh token
-        Response.Cookies.Append("refresh_token", result.RefreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddDays(7),
-            Path = "/"
-        });
+        AppendRefreshCookie(result.RefreshToken);
 
         return new LoginResponse
         {
             Token = result.Token,
+            RefreshToken = result.RefreshToken,
             UserId = result.UserId,
             Nickname = result.Nickname,
             IsAdmin = result.IsAdmin,
@@ -95,61 +111,88 @@ public sealed class UserController : ControllerBase
     }
 
     [HttpPost("Refresh")]
-    public async Task<IActionResult> Refresh()
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshRequest? request = null,
+        CancellationToken cancellationToken = default)
     {
-        var refreshTokenCookie = Request.Cookies["refresh_token"];
-        if (string.IsNullOrEmpty(refreshTokenCookie))
+        var refreshToken = ResolveRefreshToken(request);
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
         {
             return Unauthorized(new { message = "No refresh token found." });
         }
 
-        // Get userId from JWT header (set by GatewayService middleware)
-        if (!long.TryParse(Request.Headers["X-UserId"], out var userId))
-        {
-            return Unauthorized(new { message = "Invalid user identity." });
-        }
+        var result = await _refreshTokenService.RefreshAsync(refreshToken, cancellationToken);
 
-        var refreshTokenService = HttpContext.RequestServices.GetRequiredService<RefreshTokenService>();
-        var result = await refreshTokenService.RefreshAsync(refreshTokenCookie, userId, CancellationToken.None);
-
-        if (!result.IsSuccess)
+        if (!result.IsSuccess || result.Token is null || result.RefreshToken is null)
         {
             return Unauthorized(new { message = result.Error });
         }
 
-        return Ok(new { token = result.Token });
+        AppendRefreshCookie(result.RefreshToken);
+
+        return Ok(new RefreshResponse
+        {
+            Token = result.Token,
+            RefreshToken = result.RefreshToken
+        });
     }
 
     [HttpPost("Revoke")]
-    public async Task<IActionResult> Revoke()
+    public async Task<IActionResult> Revoke(
+        [FromBody] RefreshRequest? request = null,
+        CancellationToken cancellationToken = default)
     {
-        var refreshTokenCookie = Request.Cookies["refresh_token"];
-        if (string.IsNullOrEmpty(refreshTokenCookie))
+        var refreshToken = ResolveRefreshToken(request);
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
         {
             return Ok(new { message = "No token to revoke." });
         }
 
-        var refreshTokenService = HttpContext.RequestServices.GetRequiredService<RefreshTokenService>();
-        await refreshTokenService.RevokeAsync(refreshTokenCookie, CancellationToken.None);
+        await _refreshTokenService.RevokeAsync(refreshToken, cancellationToken);
 
-        Response.Cookies.Delete("refresh_token");
+        Response.Cookies.Delete(RefreshTokenCookieName);
 
         return Ok(new { message = "Logged out successfully." });
     }
 
-    [HttpGet("Me")]
-    public async Task<IActionResult> Me()
+    [HttpPost("Me")]
+    public async Task<MeResponse> Me(
+        [FromBody] RefreshRequest? request = null,
+        CancellationToken cancellationToken = default)
     {
-        var refreshTokenCookie = Request.Cookies["refresh_token"];
-        if (string.IsNullOrEmpty(refreshTokenCookie))
+        var refreshToken = ResolveRefreshToken(request);
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return Ok(new { isAuthenticated = false });
+            return new MeResponse { IsAuthenticated = false };
         }
 
-        var refreshTokenService = HttpContext.RequestServices.GetRequiredService<RefreshTokenService>();
-        var isValid = await refreshTokenService.IsSessionValidAsync(refreshTokenCookie, CancellationToken.None);
+        var userId = await _refreshTokenService.GetSessionUserIdAsync(refreshToken, cancellationToken);
 
-        return Ok(new { isAuthenticated = isValid });
+        if (userId is null)
+        {
+            return new MeResponse { IsAuthenticated = false };
+        }
+
+        var user = await _userRepository.GetByIdAsync(userId.Value, cancellationToken);
+
+        if (user is null)
+        {
+            return new MeResponse { IsAuthenticated = false };
+        }
+
+        var roles = await _userRepository.GetUserRoleNamesAsync(user.Id, cancellationToken);
+
+        return new MeResponse
+        {
+            IsAuthenticated = true,
+            UserId = user.Id,
+            Nickname = user.Nickname,
+            IsAdmin = roles.Contains(RoleName.Admin),
+            IsModerator = roles.Contains(RoleName.Moderator)
+        };
     }
 
     [HttpGet("CountUsers")]
@@ -202,5 +245,29 @@ public sealed class UserController : ControllerBase
 
         var command = new RemoveUserRoleCommand(request.UserId, request.RoleId);
         await _mediator.Send(command);
+    }
+
+    private string? ResolveRefreshToken(RefreshRequest? request)
+    {
+        if (!string.IsNullOrWhiteSpace(request?.RefreshToken))
+        {
+            return request.RefreshToken;
+        }
+
+        var cookieValue = Request.Cookies[RefreshTokenCookieName];
+
+        return string.IsNullOrWhiteSpace(cookieValue) ? null : cookieValue;
+    }
+
+    private void AppendRefreshCookie(string refreshToken)
+    {
+        Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = _cookieSecure,
+            SameSite = _cookieSameSite,
+            Expires = DateTime.UtcNow.AddDays(7),
+            Path = "/"
+        });
     }
 }
