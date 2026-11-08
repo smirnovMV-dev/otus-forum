@@ -27,6 +27,7 @@ internal sealed class RefreshTokenRepository : IRefreshTokenRepository
     public async Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
     {
         await _context.RefreshTokens.AddAsync(refreshToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RevokeAsync(long refreshTokenId, string? reason = null, CancellationToken cancellationToken = default)
@@ -37,10 +38,11 @@ internal sealed class RefreshTokenRepository : IRefreshTokenRepository
             token.RevokedAt = DateTime.UtcNow;
             token.RevokedBy = reason;
             _context.RefreshTokens.Update(token);
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 
-    public async Task RevokeAllForUserAsync(long userId, CancellationToken cancellationToken = default)
+    public async Task RevokeAllForUserAsync(long userId, string reason, CancellationToken cancellationToken = default)
     {
         var tokens = await _context.RefreshTokens
             .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
@@ -49,21 +51,57 @@ internal sealed class RefreshTokenRepository : IRefreshTokenRepository
         foreach (var token in tokens)
         {
             token.RevokedAt = DateTime.UtcNow;
-            token.RevokedBy = "revoked_on_login";
+            token.RevokedBy = reason;
         }
 
-        if (tokens.Any())
+        if (tokens.Count > 0)
         {
             _context.RefreshTokens.UpdateRange(tokens);
+            await _context.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    public async Task RotateAsync(
+        long refreshTokenId,
+        string reason,
+        RefreshToken newRefreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        var currentToken = await _context.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Id == refreshTokenId, cancellationToken);
+
+        if (currentToken is null)
+        {
+            throw new InvalidOperationException($"Refresh token with id {refreshTokenId} was not found.");
+        }
+
+        if (currentToken.RevokedAt is null)
+        {
+            currentToken.RevokedAt = DateTime.UtcNow;
+            currentToken.RevokedBy = reason;
+        }
+
+        await _context.RefreshTokens.AddAsync(newRefreshToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task DeleteExpiredAsync(DateTimeOffset before, CancellationToken cancellationToken = default)
     {
         var expiredTokens = await _context.RefreshTokens
-            .Where(rt => rt.ExpiresAt < before && rt.RevokedAt == null)
+            .Where(rt => rt.ExpiresAt < before
+                || (rt.RevokedAt != null && rt.RevokedAt < before))
             .ToListAsync(cancellationToken);
 
+        if (expiredTokens.Count == 0)
+        {
+            return;
+        }
+
         _context.RefreshTokens.RemoveRange(expiredTokens);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

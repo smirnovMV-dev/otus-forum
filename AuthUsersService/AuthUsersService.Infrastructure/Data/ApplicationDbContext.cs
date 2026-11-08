@@ -28,7 +28,6 @@ internal sealed class ApplicationDbContext(
             entity.HasIndex(e => e.TokenHash).IsUnique();
             entity.HasIndex(e => e.UserId);
             entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(256);
-            entity.Property(e => e.UserIdRef).IsRequired().HasMaxLength(256);
             entity.Property(e => e.ExpiresAt).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
         });

@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MediatR" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Seq.Extensions.Logging" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />		

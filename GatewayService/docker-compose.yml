@@ -8,6 +8,8 @@ services:
       - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - Jwt__SigningKey=${JWT_SIGNING_KEY:?Задайте JWT_SIGNING_KEY (см. .env.example)}
+      - Logging__Seq__ApiKey=${SEQ_API_KEY_GATEWAY:-}
       - Cors__AllowedOrigins=https://localhost:7126,http://localhost:3000,http://localhost:5129
     networks:
       - otus-network

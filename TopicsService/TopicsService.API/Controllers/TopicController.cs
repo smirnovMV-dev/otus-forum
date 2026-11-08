@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +31,7 @@ public class TopicController : ControllerBase
         _mediator = mediator;
     }
 
+    [Authorize]
     [HttpPost(nameof(Create))]
     public async Task<CreateTopicResponse> Create(
         [FromBody] CreateTopicRequest request,
@@ -107,6 +109,7 @@ public class TopicController : ControllerBase
         };
     }
 
+    [Authorize]
     [HttpPut("{id:long}")]
     public async Task<UpdateTopicResponse> Update(
         long id,
@@ -126,6 +129,7 @@ public class TopicController : ControllerBase
         return new UpdateTopicResponse();
     }
 
+    [Authorize]
     [HttpDelete("{id:long}")]
     public async Task Delete(
         long id,

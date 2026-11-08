@@ -14,4 +14,5 @@
   <Project Path="AuthUsersService.Domain/AuthUsersService.Domain.csproj" Id="385b9995-f57d-49ca-aa9d-4a85e7eb42b8" />
   <Project Path="AuthUsersService.Grpc/AuthUsersService.Grpc.csproj" Id="085e605a-33af-4938-be2a-21652ce77a17" />
   <Project Path="AuthUsersService.Infrastructure/AuthUsersService.Infrastructure.csproj" Id="bfa578ad-be85-4ed2-b4c5-a066e4cb187d" /> 
+  <Project Path="AuthUsersService.Tests/AuthUsersService.Tests.csproj" Id="3c87f0c7-9f0c-4f88-9a58-1f4a04f0d5b1" />
 </Solution>

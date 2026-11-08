@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using OtusForum.UI.Clients.Comments;
 using OtusForum.UI.Clients.Topics;
 using OtusForum.UI.Clients.Users;
@@ -21,9 +22,10 @@ builder.Services.AddRazorComponents()
 
 // Register authentication service
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ProtectedLocalStorage>();
 
 // Register AuthHeaderHandler for JWT token injection
-builder.Services.AddTransient<AuthHeaderHandler>();
+builder.Services.AddScoped<AuthHeaderHandler>();
 
 // Register error logging handler
 builder.Services.AddTransient<ErrorLoggingHandler>();
@@ -52,26 +54,33 @@ builder.Services.AddHttpClient("CommentsClient", client =>
 })
 .AddHttpMessageHandler<AuthHeaderHandler>();
 
+// Named client for refresh/revoke/me calls (registered without AuthHeaderHandler to avoid refresh loops)
+builder.Services.AddHttpClient("AuthRefreshClient", client =>
+{
+    client.BaseAddress = new Uri($"{gatewayUrl}/api/auth/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Register NSwag clients with explicit BaseUrl (generated clients have hardcoded localhost in constructor)
 builder.Services.AddTransient<ITopicsClient>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
     var client = factory.CreateClient("TopicsClient");
-    return new TopicsClient(client) { BaseUrl = client.BaseAddress.ToString().TrimEnd('/') };
+    return new TopicsClient(client) { BaseUrl = client.BaseAddress!.ToString().TrimEnd('/') };
 });
 
 builder.Services.AddTransient<IUsersClient>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
     var client = factory.CreateClient("UsersClient");
-    return new UsersClient(client) { BaseUrl = client.BaseAddress.ToString().TrimEnd('/') };
+    return new UsersClient(client) { BaseUrl = client.BaseAddress!.ToString().TrimEnd('/') };
 });
 
 builder.Services.AddTransient<ICommentsClient>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
     var client = factory.CreateClient("CommentsClient");
-    return new CommentsClient(client) { BaseUrl = client.BaseAddress.ToString().TrimEnd('/') };
+    return new CommentsClient(client) { BaseUrl = client.BaseAddress!.ToString().TrimEnd('/') };
 });
 
 // Register authentication and refresh services

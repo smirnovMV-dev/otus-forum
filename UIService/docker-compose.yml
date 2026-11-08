@@ -10,6 +10,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5129
       - GatewayUrl=http://gateway-service:5000
+      - Logging__Seq__ApiKey=${SEQ_API_KEY_UI:-}
     networks:
       - otus-network
     volumes:

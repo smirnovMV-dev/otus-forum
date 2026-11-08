@@ -82,6 +82,14 @@ internal sealed class CommentRepository : ICommentRepository
         }
     }
 
+    public async Task<Comment?> GetByIdAsync(
+        long commentId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.Comments
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+    }
+
     public async Task<PagedCommentsResult> GetByUserIdAsync(
         long userId,
         int page,

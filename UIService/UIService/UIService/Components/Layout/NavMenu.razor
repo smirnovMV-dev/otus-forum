@@ -112,7 +112,7 @@
 
     private async Task Logout()
     {
-        await AuthService.ClearAsync();
+        await AuthService.LogoutAsync();
         Navigation.NavigateTo("/");
     }
 

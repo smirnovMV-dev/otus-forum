@@ -1,3 +1,4 @@
+using AuthUsersService.Domain;
 using MediatR;
 using System;
 using System.Threading;
@@ -8,10 +9,14 @@ namespace AuthUsersService.Application.Users.ChangePassword;
 internal sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordCommand, int>
 {
     private readonly IUserRepository _userRepository;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
 
-    public ChangePasswordCommandHandler(IUserRepository userRepository)
+    public ChangePasswordCommandHandler(
+        IUserRepository userRepository,
+        IRefreshTokenRepository refreshTokenRepository)
     {
         _userRepository = userRepository;
+        _refreshTokenRepository = refreshTokenRepository;
     }
 
     public async Task<int> Handle(ChangePasswordCommand command, CancellationToken cancellationToken)
@@ -25,6 +30,13 @@ internal sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePassw
 
         var newHash = BCrypt.Net.BCrypt.HashPassword(command.NewPassword);
         await _userRepository.UpdatePasswordAsync(command.UserId, newHash, cancellationToken);
+
+        // После смены пароля все выданные ранее refresh-токены недействительны.
+        await _refreshTokenRepository.RevokeAllForUserAsync(
+            command.UserId,
+            RefreshTokenRevokeReason.PasswordChanged,
+            cancellationToken);
+
         return 1;
     }
 }

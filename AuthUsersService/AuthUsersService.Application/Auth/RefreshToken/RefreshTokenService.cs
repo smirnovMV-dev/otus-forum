@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AuthUsersService.Application.Auth.Models;
+using AuthUsersService.Application.Auth.Tokens;
 using AuthUsersService.Application.Users;
 using AuthUsersService.Domain;
 using RT = AuthUsersService.Domain.Entities.RefreshToken;
@@ -28,63 +26,90 @@ public sealed class RefreshTokenService
     }
 
     public async Task<RefreshResult> RefreshAsync(
-        string refreshTokenCookie,
-        long userId,
+        string refreshToken,
         CancellationToken cancellationToken = default)
     {
-        var tokenHash = ComputeHash(refreshTokenCookie);
-
-        var storedToken = await _refreshTokenRepository
-            .FindByTokenHashAsync(tokenHash, cancellationToken);
-
-        // Check: not expired, not revoked, belongs to user
-        if (storedToken is null 
-            || storedToken.ExpiresAt <= DateTime.UtcNow 
-            || storedToken.RevokedAt.HasValue 
-            || storedToken.UserId != userId)
+        if (string.IsNullOrWhiteSpace(refreshToken))
         {
             return RefreshResult.Failure("Invalid or expired refresh token.");
         }
 
-        // Get user roles
+        var tokenHash = RefreshTokenHasher.ComputeHash(refreshToken);
+
+        var storedToken = await _refreshTokenRepository
+            .FindByTokenHashAsync(tokenHash, cancellationToken);
+
+        if (storedToken is null || storedToken.IsExpired)
+        {
+            return RefreshResult.Failure("Invalid or expired refresh token.");
+        }
+
+        if (storedToken.IsRevoked)
+        {
+            // Повторное использование уже ротированного токена трактуем как кражу:
+            // отзываем все живые сессии пользователя.
+            if (string.Equals(storedToken.RevokedBy, RefreshTokenRevokeReason.Refreshed, StringComparison.Ordinal))
+            {
+                await _refreshTokenRepository.RevokeAllForUserAsync(
+                    storedToken.UserId,
+                    RefreshTokenRevokeReason.ReuseDetected,
+                    cancellationToken);
+
+                return RefreshResult.Failure("Refresh token reuse detected. All sessions have been revoked.");
+            }
+
+            return RefreshResult.Failure("Refresh token has been revoked.");
+        }
+
+        var userId = storedToken.UserId;
+
         var rolesList = await _userRepository.GetUserRoleNamesAsync(userId, cancellationToken);
 
-        // Revoke old refresh token
-        await _refreshTokenRepository.RevokeAsync(storedToken.Id, "refreshed", cancellationToken);
-
-        // Generate new access token (JWT)
         var newAccessToken = _jwtTokenGenerator.GenerateTokenFromUserId(userId, rolesList);
 
-        // Generate new refresh token
         var newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken();
-        var newRefreshTokenHash = ComputeHash(newRefreshToken);
 
-        // Save new refresh token
         var newStoredToken = new RT
         {
             UserId = userId,
-            TokenHash = newRefreshTokenHash,
-            UserIdRef = userId.ToString(),
+            TokenHash = RefreshTokenHasher.ComputeHash(newRefreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(7),
             CreatedAt = DateTime.UtcNow
         };
-        await _refreshTokenRepository.AddAsync(newStoredToken, cancellationToken);
 
-        return RefreshResult.Success(newAccessToken);
+        await _refreshTokenRepository.RotateAsync(
+            storedToken.Id,
+            RefreshTokenRevokeReason.Refreshed,
+            newStoredToken,
+            cancellationToken);
+
+        return RefreshResult.Success(newAccessToken, newRefreshToken);
+    }
+
+    public async Task<long?> GetSessionUserIdAsync(
+        string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        var storedToken = await FindActiveTokenAsync(refreshToken, cancellationToken);
+
+        return storedToken?.UserId;
     }
 
     public async Task<bool> RevokeAsync(
-        string refreshTokenCookie,
+        string refreshToken,
         CancellationToken cancellationToken = default)
     {
-        var tokenHash = ComputeHash(refreshTokenCookie);
+        var tokenHash = RefreshTokenHasher.ComputeHash(refreshToken);
 
         var storedToken = await _refreshTokenRepository
             .FindByTokenHashAsync(tokenHash, cancellationToken);
 
         if (storedToken is not null && storedToken.RevokedAt == null)
         {
-            await _refreshTokenRepository.RevokeAsync(storedToken.Id, "logout", cancellationToken);
+            await _refreshTokenRepository.RevokeAsync(
+                storedToken.Id,
+                RefreshTokenRevokeReason.Logout,
+                cancellationToken);
             return true;
         }
 
@@ -92,31 +117,39 @@ public sealed class RefreshTokenService
     }
 
     public async Task<bool> IsSessionValidAsync(
-        string refreshTokenCookie,
+        string refreshToken,
         CancellationToken cancellationToken = default)
     {
-        var tokenHash = ComputeHash(refreshTokenCookie);
+        var tokenHash = RefreshTokenHasher.ComputeHash(refreshToken);
 
         var storedToken = await _refreshTokenRepository
             .FindByTokenHashAsync(tokenHash, cancellationToken);
 
-        return storedToken is not null 
-            && storedToken.ExpiresAt > DateTime.UtcNow 
-            && storedToken.RevokedAt == null;
+        return storedToken is not null
+            && storedToken.IsActive;
     }
 
-    private static string ComputeHash(string token)
+    private async Task<RT?> FindActiveTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken)
     {
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(token);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return null;
+        }
+
+        var tokenHash = RefreshTokenHasher.ComputeHash(refreshToken);
+
+        var storedToken = await _refreshTokenRepository
+            .FindByTokenHashAsync(tokenHash, cancellationToken);
+
+        return storedToken is not null && storedToken.IsActive ? storedToken : null;
     }
 }
 
-public sealed record RefreshResult(string? Token, string? Error)
+public sealed record RefreshResult(string? Token, string? RefreshToken, string? Error)
 {
     public bool IsSuccess => Error is null;
-    public static RefreshResult Success(string token) => new(token, null);
-    public static RefreshResult Failure(string error) => new(null, error);
+    public static RefreshResult Success(string token, string refreshToken) => new(token, refreshToken, null);
+    public static RefreshResult Failure(string error) => new(null, null, error);
 }
