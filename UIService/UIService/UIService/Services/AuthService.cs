@@ -73,7 +73,7 @@ public sealed class AuthService
                 return;
             }
 
-            await RestoreProfileAsync(stored.Value);
+            await RestoreProfileAsync();
         }
         catch (Exception ex)
         {
@@ -255,14 +255,23 @@ public sealed class AuthService
         }
     }
 
-    private async Task RestoreProfileAsync(string refreshToken, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Перечитывает профиль пользователя по текущему refresh-токену.
+    /// Вызывать только после обновления пары токенов: старый токен уже отозван ротацией.
+    /// </summary>
+    private async Task RestoreProfileAsync(CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_refreshToken))
+        {
+            return;
+        }
+
         try
         {
             using var client = _httpClientFactory.CreateClient(RefreshClientName);
             using var response = await client.PostAsJsonAsync(
                 MeUri,
-                new RefreshRequestBody { RefreshToken = refreshToken },
+                new RefreshRequestBody { RefreshToken = _refreshToken },
                 JsonOptions,
                 cancellationToken);
 

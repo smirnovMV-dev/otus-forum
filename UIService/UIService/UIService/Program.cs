@@ -24,35 +24,15 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ProtectedLocalStorage>();
 
-// Register AuthHeaderHandler for JWT token injection
-builder.Services.AddScoped<AuthHeaderHandler>();
+// Register AuthHeaderHandler for JWT token injection.
+// Transient обязателен: каждому HttpClient нужен собственный экземпляр обработчика.
+builder.Services.AddTransient<AuthHeaderHandler>();
 
 // Register error logging handler
 builder.Services.AddTransient<ErrorLoggingHandler>();
 
 // Register NSwag API clients through GatewayService
 var gatewayUrl = builder.Configuration.GetValue<string>("GatewayUrl") ?? "http://gateway-service:5000";
-
-builder.Services.AddHttpClient("TopicsClient", client =>
-{
-    client.BaseAddress = new Uri($"{gatewayUrl}/api/topics/");
-    client.Timeout = TimeSpan.FromMinutes(1);
-})
-.AddHttpMessageHandler<AuthHeaderHandler>();
-
-builder.Services.AddHttpClient("UsersClient", client =>
-{
-    client.BaseAddress = new Uri($"{gatewayUrl}/api/auth/");
-    client.Timeout = TimeSpan.FromMinutes(1);
-})
-.AddHttpMessageHandler<AuthHeaderHandler>();
-
-builder.Services.AddHttpClient("CommentsClient", client =>
-{
-    client.BaseAddress = new Uri($"{gatewayUrl}/api/comments/");
-    client.Timeout = TimeSpan.FromMinutes(1);
-})
-.AddHttpMessageHandler<AuthHeaderHandler>();
 
 // Named client for refresh/revoke/me calls (registered without AuthHeaderHandler to avoid refresh loops)
 builder.Services.AddHttpClient("AuthRefreshClient", client =>
@@ -61,26 +41,25 @@ builder.Services.AddHttpClient("AuthRefreshClient", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-// Register NSwag clients with explicit BaseUrl (generated clients have hardcoded localhost in constructor)
-builder.Services.AddTransient<ITopicsClient>(sp =>
+// NSwag-клиенты регистрируются как scoped (scope цепи Blazor), а HttpClient с AuthHeaderHandler
+// создаётся в этом же scope. Через AddHttpMessageHandler так нельзя: IHttpClientFactory разрешает
+// обработчики в собственном scope, где AuthService пуст, и JWT не попадал в заголовок Authorization.
+builder.Services.AddScoped<ITopicsClient>(sp =>
 {
-    var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var client = factory.CreateClient("TopicsClient");
-    return new TopicsClient(client) { BaseUrl = client.BaseAddress!.ToString().TrimEnd('/') };
+    var httpClient = CreateApiHttpClient(sp, $"{gatewayUrl}/api/topics/");
+    return new TopicsClient(httpClient) { BaseUrl = httpClient.BaseAddress!.ToString().TrimEnd('/') };
 });
 
-builder.Services.AddTransient<IUsersClient>(sp =>
+builder.Services.AddScoped<IUsersClient>(sp =>
 {
-    var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var client = factory.CreateClient("UsersClient");
-    return new UsersClient(client) { BaseUrl = client.BaseAddress!.ToString().TrimEnd('/') };
+    var httpClient = CreateApiHttpClient(sp, $"{gatewayUrl}/api/auth/");
+    return new UsersClient(httpClient) { BaseUrl = httpClient.BaseAddress!.ToString().TrimEnd('/') };
 });
 
-builder.Services.AddTransient<ICommentsClient>(sp =>
+builder.Services.AddScoped<ICommentsClient>(sp =>
 {
-    var factory = sp.GetRequiredService<IHttpClientFactory>();
-    var client = factory.CreateClient("CommentsClient");
-    return new CommentsClient(client) { BaseUrl = client.BaseAddress!.ToString().TrimEnd('/') };
+    var httpClient = CreateApiHttpClient(sp, $"{gatewayUrl}/api/comments/");
+    return new CommentsClient(httpClient) { BaseUrl = httpClient.BaseAddress!.ToString().TrimEnd('/') };
 });
 
 // Register authentication and refresh services
@@ -114,3 +93,21 @@ app.MapRazorComponents<App>()
     .AddAdditionalAssemblies(typeof(UIService.Client._Imports).Assembly);
 
 app.Run();
+
+// Создаёт HttpClient с AuthHeaderHandler, разрешённым в scope вызывающего кода (цепи Blazor),
+// чтобы обработчик видел AuthService текущей сессии и подставлял актуальный access-токен.
+static HttpClient CreateApiHttpClient(IServiceProvider services, string baseAddress)
+{
+    var authHeaderHandler = services.GetRequiredService<AuthHeaderHandler>();
+
+    authHeaderHandler.InnerHandler = new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+    };
+
+    return new HttpClient(authHeaderHandler)
+    {
+        BaseAddress = new Uri(baseAddress),
+        Timeout = TimeSpan.FromMinutes(1)
+    };
+}
