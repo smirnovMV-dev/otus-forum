@@ -1865,7 +1865,7 @@ namespace OtusForum.UI.Clients.Users
 
         [System.Text.Json.Serialization.JsonPropertyName("currentRoles")]
         [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<int> CurrentRoles { get; set; } = new System.Collections.ObjectModel.Collection<int>();
+        public System.Collections.Generic.ICollection<long> CurrentRoles { get; set; } = new System.Collections.ObjectModel.Collection<long>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

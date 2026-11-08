@@ -105,6 +105,16 @@ internal sealed class UserRepository : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<long>> GetUserRoleIdsAsync(
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Select(ur => ur.RoleId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<User?> GetByIdAsync(
         long userId,
         CancellationToken cancellationToken)

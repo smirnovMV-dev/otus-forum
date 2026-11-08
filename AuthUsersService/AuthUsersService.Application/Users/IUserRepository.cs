@@ -27,6 +27,10 @@ public interface IUserRepository
         long userId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<long>> GetUserRoleIdsAsync(
+        long userId,
+        CancellationToken cancellationToken);
+
     Task<User?> GetByIdAsync(
         long userId,
         CancellationToken cancellationToken);

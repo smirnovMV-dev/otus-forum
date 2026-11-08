@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +28,7 @@ internal sealed class GetUserWithRolesQueryHandler : IRequestHandler<GetUserWith
         if (user is null)
             throw new KeyNotFoundException($"User with ID {request.UserId} not found.");
 
-        var roles = await _userRepository.GetUserRoleNamesAsync(request.UserId, cancellationToken);
-        return new UserWithRolesModel(user.Id, user.Nickname, user.Email, roles);
+        var roleIds = (await _userRepository.GetUserRoleIdsAsync(request.UserId, cancellationToken)).ToList();
+        return new UserWithRolesModel(user.Id, user.Nickname, user.Email, roleIds);
     }
 }

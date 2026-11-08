@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
@@ -213,10 +212,6 @@ public sealed class AuthService
 
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
-                _logger.LogInformation(
-                    "Сервер отклонил refresh-токен ({StatusCode}); сессия очищается.",
-                    response.StatusCode);
-
                 await ClearAsync();
                 return null;
             }

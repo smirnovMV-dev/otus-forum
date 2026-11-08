@@ -1,0 +1,397 @@
+@page "/admin-panel"
+@rendermode InteractiveServer
+@using OtusForum.UI.Clients.Users
+@inject IUsersClient UsersClient
+@inject AuthService AuthService
+
+<PageTitle>Администрирование</PageTitle>
+
+@if (!AuthService.IsAdmin)
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>У вас нет прав администратора.
+    </div>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Поиск по никнейму</label>
+                    <input id="searchInput" type="text" class="form-control" placeholder="Введите часть никнейма..."
+                           @bind="searchNickname" @bind:event="oninput" />
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" @onclick="SearchUsersAsync" disabled="@string.IsNullOrWhiteSpace(searchNickname)">
+                        <i class="bi bi-search me-1"></i>Найти
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (_errorMessage is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
+        </div>
+    }
+
+    @if (_searching)
+    {
+        <div class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Поиск...</span>
+            </div>
+        </div>
+    }
+    else if (_searchResults.Count > 0)
+    {
+        <div class="row g-3">
+            @foreach (var user in _searchResults)
+            {
+                <div class="col-12" key="@user.Id">
+                    <div class="card user-card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-circle me-2 fs-5"></i>
+                                <div>
+                                    <span class="fw-bold">@user.Nickname</span>
+                                    <span class="text-muted ms-2 small">(@user.Email)</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleRolesPanel(user.Id)">
+                                <i class="bi bi-shield-check me-1"></i>
+                                @(_expandedUsers.Contains(user.Id) ? "Скрыть роли" : "Управление ролями")
+                            </button>
+                        </div>
+
+                        @if (_expandedUsers.Contains(user.Id))
+                        {
+                            <div class="card-body">
+                                @if (_userRolesCache.TryGetValue(user.Id, out var userRoles))
+                                {
+                                    <!-- Текущие роли -->
+                                    <h6 class="mb-3"><i class="bi bi-badge-check me-1"></i>Текущие роли:</h6>
+                                    @if (userRoles.CurrentRoleIds.Any())
+                                    {
+                                        <div class="d-flex flex-wrap gap-2 mb-4">
+                                            @foreach (var roleId in userRoles.CurrentRoleIds)
+                                            {
+                                                var roleName = _allRoles.FirstOrDefault(r => r.Id == roleId)?.Name ?? $"ID:{roleId}";
+                                                <span class="badge bg-primary d-flex align-items-center gap-1">
+                                                    @roleName
+                                                    <button class="btn btn-sm btn-danger ms-1 p-0 border-0" 
+                                                            title="Снять роль"
+                                                            @onclick="() => RemoveRoleAsync(user.Id, roleId)"
+                                                            disabled="@(_loadingUsers.Contains(user.Id))">
+                                                        &times;
+                                                    </button>
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info py-2 mb-3">
+                                            <i class="bi bi-info-circle me-1"></i>У пользователя нет ролей
+                                        </div>
+                                    }
+
+                                    <!-- Назначить роль -->
+                                    <h6 class="mb-3"><i class="bi bi-shield-plus me-1"></i>Назначить роль:</h6>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <select class="form-select" @onchange="(e) => selectedRoleIdStr = e.Value?.ToString()">
+                                            <option value="">Выберите роль...</option>
+                                            @foreach (var role in _allRoles)
+                                            {
+                                                <option value="@role.Id" 
+                                                        selected="@(selectedRoleIdStr == role.Id.ToString())">
+                                                    @role.Name
+                                                    @if (userRoles.CurrentRoleIds.Contains(role.Id))
+                                                    {
+                                                        <text> (уже назначена)</text>
+                                                    }
+                                                </option>
+                                            }
+                                        </select>
+                                        <button class="btn btn-success" 
+                                                @onclick="() => AssignRoleAsync(user.Id)"
+                                                disabled="@(string.IsNullOrEmpty(selectedRoleIdStr) || _loadingUsers.Contains(user.Id))">
+                                            <i class="bi bi-plus-circle me-1"></i>Назначить
+                                        </button>
+                                    </div>
+
+                                    @if (_roleErrorMessage.TryGetValue(user.Id, out var roleError) && !string.IsNullOrEmpty(roleError))
+                                    {
+                                        <div class="alert alert-danger mt-3 py-2 mb-0" role="alert">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>@roleError
+                                        </div>
+                                    }
+                                }
+                                else if (_loadingUsers.Contains(user.Id))
+                                {
+                                    <div class="text-center my-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Загрузка...</span>
+                                        </div>
+                                        <span class="ms-2">Загрузка ролей...</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (_searched)
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle me-2"></i>Пользователи не найдены.
+        </div>
+    }
+}
+
+@code {
+    private string searchNickname = string.Empty;
+    private bool _searching = false;
+    private bool _searched = false;
+    private string? _errorMessage;
+    private IReadOnlyCollection<UserSearchModel> _searchResults = [];
+    private bool _initialized;
+
+    // Управление ролями
+    private HashSet<long> _expandedUsers = [];
+    private HashSet<long> _loadingUsers = [];
+    private Dictionary<long, string> _roleErrorMessage = new();
+    private Dictionary<long, UserRolesData> _userRolesCache = new();
+    private string? selectedRoleIdStr;
+    private ICollection<RoleModel> _allRoles = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_initialized)
+        {
+            _initialized = true;
+            await AuthService.InitializeAsync();
+            await LoadAllRolesAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAllRolesAsync()
+    {
+        try
+        {
+            var response = await UsersClient.GetAllAsync(AuthService.IsAdmin);
+            _allRoles = response.Roles ?? [];
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Не удалось загрузить список ролей: {ex.Message}";
+        }
+    }
+
+    private async Task SearchUsersAsync()
+    {
+        if (string.IsNullOrWhiteSpace(searchNickname))
+            return;
+
+        _searching = true;
+        _searched = false;
+        _searchResults = [];
+        _errorMessage = null;
+        _expandedUsers.Clear();
+        _userRolesCache.Clear();
+        _roleErrorMessage.Clear();
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            _searchResults = await SearchUsers(searchNickname);
+            _searched = _searchResults.Count > 0;
+        }
+        catch (OtusForum.UI.Clients.Users.ApiException ex) when (ex.StatusCode is 401 or 403)
+        {
+            _errorMessage = "Недостаточно прав для поиска пользователей. Войдите заново.";
+            _searchResults = [];
+        }
+        catch (HttpRequestException ex)
+        {
+            _errorMessage = $"Ошибка сети при поиске пользователей: {ex.Message}";
+            _searchResults = [];
+        }
+        catch (JsonException ex)
+        {
+            _errorMessage = $"Ошибка обработки ответа сервера: {ex.Message}";
+            _searchResults = [];
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Произошла ошибка при поиске пользователей: {ex.Message}";
+            _searchResults = [];
+        }
+        finally
+        {
+            _searching = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task<IReadOnlyCollection<UserSearchModel>> SearchUsers(string nicknamePart)
+    {
+        var users = await UsersClient.SearchByNicknameAsync(nicknamePart, AuthService.IsAdmin);
+        return users.ToList();
+    }
+
+    private void ToggleRolesPanel(long userId)
+    {
+        if (_expandedUsers.Contains(userId))
+        {
+            _expandedUsers.Remove(userId);
+            _roleErrorMessage.Remove(userId);
+        }
+        else
+        {
+            _expandedUsers.Add(userId);
+            _roleErrorMessage.Remove(userId);
+            
+            if (!_userRolesCache.ContainsKey(userId))
+            {
+                _ = LoadUserRolesAsync(userId);
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadUserRolesAsync(long userId)
+    {
+        _loadingUsers.Add(userId);
+        StateHasChanged();
+
+        try
+        {
+            var userWithRoles = await UsersClient.GetWithRolesAsync(userId, AuthService.IsAdmin);
+            _userRolesCache[userId] = new UserRolesData(
+                userWithRoles.CurrentRoles?.ToList() ?? []);
+        }
+        catch (Exception ex)
+        {
+            _roleErrorMessage[userId] = $"Не удалось загрузить роли: {ex.Message}";
+        }
+        finally
+        {
+            _loadingUsers.Remove(userId);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task AssignRoleAsync(long userId)
+    {
+        if (string.IsNullOrEmpty(selectedRoleIdStr) || !long.TryParse(selectedRoleIdStr, out var roleId))
+            return;
+
+        if (_userRolesCache.TryGetValue(userId, out var existingRoles) && existingRoles.CurrentRoleIds.Contains(roleId))
+        {
+            _roleErrorMessage[userId] = "Эта роль уже назначена";
+            return;
+        }
+
+        _roleErrorMessage.Remove(userId);
+
+        try
+        {
+            await UsersClient.AssignRoleAsync(new AssignUserRoleRequest
+            {
+                UserId = userId,
+                RoleId = roleId,
+                ExpiresAt = null
+            });
+
+            // Обновить кэш ролей пользователя
+            if (_userRolesCache.TryGetValue(userId, out var updatedRoles))
+            {
+                var rolesList = updatedRoles.CurrentRoleIds.ToList();
+                rolesList.Add(roleId);
+                _userRolesCache[userId] = new UserRolesData(rolesList);
+            }
+
+            selectedRoleIdStr = null;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OtusForum.UI.Clients.Users.ApiException ex)
+        {
+            _roleErrorMessage[userId] = $"Ошибка при назначении роли: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            _roleErrorMessage[userId] = $"Ошибка при назначении роли: {ex.Message}";
+        }
+    }
+
+    private async Task RemoveRoleAsync(long userId, long roleId)
+    {
+        _roleErrorMessage.Remove(userId);
+
+        try
+        {
+            await UsersClient.RemoveRoleAsync(AuthService.IsAdmin, new RemoveUserRoleRequest
+            {
+                UserId = userId,
+                RoleId = roleId
+            });
+
+            // Обновить кэш ролей пользователя
+            if (_userRolesCache.TryGetValue(userId, out var updatedRoles))
+            {
+                var rolesList = updatedRoles.CurrentRoleIds.Where(id => id != roleId).ToList();
+                _userRolesCache[userId] = new UserRolesData(rolesList);
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OtusForum.UI.Clients.Users.ApiException ex)
+        {
+            _roleErrorMessage[userId] = $"Ошибка при снятии роли: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            _roleErrorMessage[userId] = $"Ошибка при снятии роли: {ex.Message}";
+        }
+    }
+
+    private class UserRolesData
+    {
+        public ICollection<long> CurrentRoleIds { get; }
+
+        public UserRolesData(ICollection<long> currentRoleIds)
+        {
+            CurrentRoleIds = currentRoleIds;
+        }
+    }
+}
+
+<style>
+    .user-card {
+        border-left: 4px solid #0d6efd;
+    }
+
+    .user-card .card-header {
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        font-size: 0.9rem;
+    }
+
+    .badge .btn-close {
+        filter: invert(1);
+        opacity: 0.7;
+    }
+
+    .badge .btn-close:hover {
+        opacity: 1;
+    }
+</style>
