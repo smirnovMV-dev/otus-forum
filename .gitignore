@@ -337,7 +337,6 @@ ASALocalRun/
 # Local History for Visual Studio
 .localhistory/
 
-# Секреты окружения (см. .env.example)
+# Локальные секреты окружения — не коммитить
 .env
 *.env
-!.env.example

@@ -4,7 +4,7 @@ services:
     container_name: auth-users-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD (см. .env.example)}
+      POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: auth-users
     ports:
       - "5533:5432"
@@ -25,14 +25,11 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: auth-users-service
-    # Порты наружу не публикуются: сервис доступен только внутри otus-network (через Gateway).
-    expose:
-      - "5225"
-      - "5226"
+    ports:
+      - "5225:5225"
+      - "5226:5226"
     environment:
-      - ConnectionStrings__PostgresConnection=Host=auth-users-postgres;Port=5432;Database=auth-users;Username=postgres;Password=${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD (см. .env.example)}
-      - Jwt__SigningKey=${JWT_SIGNING_KEY:?Задайте JWT_SIGNING_KEY (см. .env.example)}
-      - Logging__Seq__ApiKey=${SEQ_API_KEY_AUTH:-}
+      - ConnectionStrings__PostgresConnection=Host=auth-users-postgres;Port=5432;Database=auth-users;Username=postgres;Password=mysecretpassword
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       postgres:

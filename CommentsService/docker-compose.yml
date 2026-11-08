@@ -4,7 +4,7 @@ services:
     container_name: comments-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD (см. .env.example)}
+      POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: comments-api
     ports:
       - "5434:5432"
@@ -25,14 +25,11 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: comments-service
-    # Порты наружу не публикуются: сервис доступен только внутри otus-network (через Gateway).
-    expose:
-      - "5044"
-      - "5045"
+    ports:
+      - "5044:5044"
+      - "5045:5045"
     environment:
-      - ConnectionStrings__PostgresConnection=Host=comments-postgres;Port=5432;Database=comments-api;Username=postgres;Password=${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD (см. .env.example)}
-      - Jwt__SigningKey=${JWT_SIGNING_KEY:?Задайте JWT_SIGNING_KEY (см. .env.example)}
-      - Logging__Seq__ApiKey=${SEQ_API_KEY_COMMENTS:-}
+      - ConnectionStrings__PostgresConnection=Host=comments-postgres;Port=5432;Database=comments-api;Username=postgres;Password=mysecretpassword
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_KESTREL__ENDPOINTS__HTTP1__URL=http://+:5044
       - ASPNETCORE_KESTREL__ENDPOINTS__HTTP1__PROTOCOLS=Http1
