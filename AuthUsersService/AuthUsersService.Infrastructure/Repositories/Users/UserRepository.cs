@@ -69,6 +69,20 @@ internal sealed class UserRepository : IUserRepository
         }
     }
 
+    public async Task<User?> GetByNicknameAsync(
+        string nickname,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(nickname))
+            return null;
+
+        var entity = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Nickname == nickname, cancellationToken);
+
+        return entity?.ToDomain();
+    }
+
     public async Task<User?> GetByEmailAsync(
         string email,
         CancellationToken cancellationToken)

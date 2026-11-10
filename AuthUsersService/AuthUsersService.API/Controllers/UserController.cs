@@ -92,7 +92,7 @@ public sealed class UserController : ControllerBase
         CancellationToken cancellationToken)
     {
         var command = new LoginUserCommand(
-            request.Email,
+            request.Nickname,
             request.Password);
 
         var result = await _mediator.Send(command, cancellationToken);

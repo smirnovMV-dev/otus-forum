@@ -1622,9 +1622,9 @@ namespace OtusForum.UI.Clients.Users
     public partial class LoginRequest
     {
 
-        [System.Text.Json.Serialization.JsonPropertyName("email")]
+        [System.Text.Json.Serialization.JsonPropertyName("nickname")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public string Email { get; set; }
+        public string Nickname { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("password")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]

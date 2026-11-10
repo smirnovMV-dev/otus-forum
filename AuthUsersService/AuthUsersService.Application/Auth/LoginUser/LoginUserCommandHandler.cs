@@ -13,7 +13,7 @@ using RT = AuthUsersService.Domain.Entities.RefreshToken;
 namespace AuthUsersService.Application.Auth.LoginUser;
 
 public sealed record LoginUserCommand(
-    string Email,
+    string Nickname,
     string Password) : IRequest<LoginUserResponse>;
 
 internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, LoginUserResponse>
@@ -36,11 +36,11 @@ internal sealed class LoginUserCommandHandler : IRequestHandler<LoginUserCommand
         LoginUserCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
+        var user = await _userRepository.GetByNicknameAsync(command.Nickname, cancellationToken);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash))
         {
-            throw new UnauthorizedAccessException("Неверный email или пароль.");
+            throw new UnauthorizedAccessException("Неверный никнейм или пароль.");
         }
 
         var roles = await _userRepository.GetUserRoleNamesAsync(user.Id, cancellationToken);

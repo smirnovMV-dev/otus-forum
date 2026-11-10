@@ -16,6 +16,10 @@ public interface IUserRepository
         IReadOnlyCollection<long> userIds,
         CancellationToken cancellationToken);
 
+    Task<User?> GetByNicknameAsync(
+        string nickname,
+        CancellationToken cancellationToken);
+
     Task<User?> GetByEmailAsync(
         string email,
         CancellationToken cancellationToken);

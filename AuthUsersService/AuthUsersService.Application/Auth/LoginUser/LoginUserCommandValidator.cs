@@ -6,11 +6,9 @@ internal sealed class LoginUserCommandValidator : AbstractValidator<LoginUserCom
 {
     public LoginUserCommandValidator()
     {
-        RuleFor(command => command.Email)
+        RuleFor(command => command.Nickname)
             .NotEmpty()
-            .WithMessage("Email не должен быть пустым.")
-            .EmailAddress()
-            .WithMessage("Email должен быть валидным.");
+            .WithMessage("Никнейм не должен быть пустым.");
 
         RuleFor(command => command.Password)
             .NotEmpty()
