@@ -1,13 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TopicsService.API.Middleware;
 using TopicsService.API.Models.Topics.CreateTopic;
 using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.API.Models.Topics.GetTopicWithComments;
+using TopicsService.API.Models.Topics.GetTopics;
 using TopicsService.API.Models.Topics.GetTopicsByUserId;
 using TopicsService.API.Models.Topics.UpdateTopic;
 using TopicsService.Application.Topics.CreateTopic;
@@ -15,6 +14,7 @@ using TopicsService.Application.Topics.DeleteTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
 using TopicsService.Application.Topics.GetTopicWithComments;
 using TopicsService.Application.Topics.GetTopicWithComments.Models;
+using TopicsService.Application.Topics.GetTopics;
 using TopicsService.Application.Topics.GetTopicsByUserId;
 using TopicsService.Application.Topics.UpdateTopic;
 
@@ -65,6 +65,27 @@ public class TopicController : ControllerBase
                 Title = r.Title,
                 AuthorNikname = r.AuthorNikname,
                 CreatedAt = r.CreatedAt
+            })],
+            TotalCount = results.TotalCount
+        };
+    }
+
+    [HttpPost(nameof(GetTopics))]
+    public async Task<GetTopicsResponse> GetTopics(
+        [FromBody] GetTopicsRequest request)
+    {
+        var command = new GetTopicsCommand(request.Page, request.PageSize);
+        var results = await _mediator.Send(command);
+
+        return new GetTopicsResponse
+        {
+            Topics = [.. results.Topics.Select(r => new TopicsItemResponse
+            {
+                Id = r.Id,
+                Title = r.Title,
+                AuthorNikname = r.AuthorNikname,
+                CreatedAt = r.CreatedAt,
+                CommentsCount = r.CommentsCount
             })],
             TotalCount = results.TotalCount
         };

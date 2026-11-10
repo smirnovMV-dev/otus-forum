@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TopicsService.Application.Services.Externals.CommentsApiService.Models;
 using CommentProto = OtusForum.CommentsService.Grpc.Comment;
+using GetActiveCommentsCountRequestProto = OtusForum.CommentsService.Grpc.GetActiveCommentsCountRequest;
 
 namespace TopicsService.Application.Services.Externals.CommentsApiService;
 
@@ -52,6 +53,31 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
         {
             _logger.LogError(ex, "Ошибка при получении комментариев для темы {TopicId}", topicId);
             return new List<CommentDto>().AsReadOnly();
+        }
+    }
+
+    public async Task<IReadOnlyDictionary<long, int>> GetActiveCommentsCountAsync(
+        IReadOnlyCollection<long> topicIds,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var request = new GetActiveCommentsCountRequestProto
+            {
+                TopicIds = { topicIds }
+            };
+
+            var response = await _client.GetActiveCommentsCountAsync(
+                request,
+                cancellationToken: cancellationToken);
+
+            return response.TopicCounts
+                .ToDictionary(tc => tc.TopicId, tc => tc.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении количества комментариев для тем");
+            return new Dictionary<long, int>();
         }
     }
 

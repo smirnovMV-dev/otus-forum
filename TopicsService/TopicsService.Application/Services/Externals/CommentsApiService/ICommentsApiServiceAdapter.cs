@@ -12,4 +12,8 @@ internal interface ICommentsApiServiceAdapter
         int page,
         int pageSize,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<long, int>> GetActiveCommentsCountAsync(
+        IReadOnlyCollection<long> topicIds,
+        CancellationToken cancellationToken);
 }

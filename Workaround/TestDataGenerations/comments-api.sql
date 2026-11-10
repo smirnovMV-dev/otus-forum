@@ -6,8 +6,8 @@ TRUNCATE TABLE comments RESTART IDENTITY;
 
 INSERT INTO comments (topic_id, parent_comment_id, author_id, content, created_at, updated_at, updated_by_user_id, is_deleted, deleted_at)
 SELECT
-    1 + (random() * 99)::int,
-    CASE WHEN random() < 0.15 THEN NULL ELSE 1 + (random() * 499)::int END,
+    1 + (((i - 1) + (random() * 5)::int) % 100)::int,
+    CASE WHEN random() < 0.15 THEN NULL ELSE 1 + (random() * 5499)::int END,
     1 + (random() * 49)::int,
     (ARRAY[
         'Отличная статья! Очень полезно.',
@@ -46,6 +46,6 @@ SELECT
     CASE WHEN random() < 0.2 THEN 1 + (random() * 49)::int ELSE NULL END,
     CASE WHEN random() < 0.03 THEN true ELSE false END,
     CASE WHEN random() < 0.03 THEN NOW() - INTERVAL '1 day' ELSE NULL END
-FROM generate_series(1, 500) AS s(i);
+FROM generate_series(1, 5500) AS s(i);
 
 SELECT COUNT(*) AS comments_created FROM comments;

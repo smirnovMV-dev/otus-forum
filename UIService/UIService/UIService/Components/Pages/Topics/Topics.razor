@@ -4,8 +4,6 @@
 @inject OtusForum.UI.Clients.Topics.ITopicsClient TopicsService
 @inject ILogger<Topics> _logger
 
-<h3>Темы</h3>
-
 <PageTitle>Темы</PageTitle>
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
@@ -36,6 +34,7 @@ else
                     <th scope="col">Название темы</th>
                     <th scope="col" style="width: 150px;">Автор</th>
                     <th scope="col" style="width: 160px;">Дата создания</th>
+                    <th scope="col" style="width: 120px;">Комментариев</th>
                     <th scope="col" style="width: 80px;" class="text-center">Действия</th>
                 </tr>
             </thead>
@@ -44,7 +43,7 @@ else
                 {
                     <tr key="@topic.Id">
                         <td>
-                            <a href="/topics/@topic.Id" class="fw-bold text-decoration-none text-dark">
+                            <a href="/topics/@topic.Id" class="text-decoration-none text-dark">
                                 @topic.Title
                             </a>
                         </td>
@@ -53,6 +52,9 @@ else
                         </td>
                         <td class="text-muted small">
                             @topic.CreatedAt.ToString("g")
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">@topic.CommentsCount</span>
                         </td>
                         <td class="text-center">
                             <a href="/topics/@topic.Id" class="btn btn-sm btn-outline-primary" title="Открыть тему">
@@ -69,7 +71,7 @@ else
 }
 
 @code {
-    private IReadOnlyCollection<LatestTopicsResponse>? _latestTopics;
+    private IReadOnlyCollection<TopicsItemResponse>? _latestTopics;
     private int _currentPage = 1;
     private int _pageSize = 10;
     private int _totalTopicsCount = 0;
@@ -78,17 +80,17 @@ else
     {
         try
         {
-            var request = new GetLatestTopicsRequest { Page = page, PageSize = _pageSize };
-            var response = await TopicsService.GetLatestAsync(request);
+            var request = new GetTopicsRequest { Page = page, PageSize = _pageSize };
+            var response = await TopicsService.GetTopicsAsync(request);
 
-            _latestTopics = response.LatestTopics.ToArray();
+            _latestTopics = response.Topics.ToArray();
             _totalTopicsCount = response.TotalCount;
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Ошибка при получении списка тем (страница {Page})", page);
-            _latestTopics = Array.Empty<LatestTopicsResponse>();
+            _latestTopics = Array.Empty<TopicsItemResponse>();
             await InvokeAsync(StateHasChanged);
         }
     }

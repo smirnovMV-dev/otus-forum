@@ -13,6 +13,13 @@ service CommentsGrpcApi {
 	   		body: "*"
 		};
 	}
+
+	rpc GetActiveCommentsCount (GetActiveCommentsCountRequest) returns (GetActiveCommentsCountResponse) {
+		option (google.api.http) = {
+	   		post: "/api/v1/comments/count"
+	   		body: "*"
+		};
+	}
 }
 
 message GetCommentsByTopicRequest {
@@ -35,4 +42,17 @@ message Comment {
 	string created_at = 6;
 	string updated_at = 7;
 	repeated Comment replies = 8;
+}
+
+message GetActiveCommentsCountRequest {
+	repeated int64 topic_ids = 1;
+}
+
+message GetActiveCommentsCountResponse {
+	repeated TopicCommentCount topic_counts = 1;
+}
+
+message TopicCommentCount {
+	int64 topic_id = 1;
+	int32 count = 2;
 }

@@ -40,4 +40,8 @@ public interface ICommentRepository
 
     Task<int> CountAsync(
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<long, int>> CountByTopicIdsAsync(
+        IReadOnlyCollection<long> topicIds,
+        CancellationToken cancellationToken);
 }

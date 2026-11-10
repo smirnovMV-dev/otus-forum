@@ -185,4 +185,31 @@ internal sealed class CommentRepository : ICommentRepository
         return await _context.Comments
             .CountAsync(c => !c.IsDeleted, cancellationToken);
     }
+
+    public async Task<IReadOnlyDictionary<long, int>> CountByTopicIdsAsync(
+        IReadOnlyCollection<long> topicIds,
+        CancellationToken cancellationToken)
+    {
+        if (!topicIds.Any())
+        {
+            return new Dictionary<long, int>();
+        }
+
+        var result = await _context.Comments
+            .Where(c => topicIds.Contains(c.TopicId) && !c.IsDeleted)
+            .GroupBy(c => c.TopicId)
+            .Select(g => new { TopicId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TopicId, x => x.Count, cancellationToken);
+
+        // Ensure all requested topic IDs are present (even with 0 count)
+        foreach (var topicId in topicIds)
+        {
+            if (!result.ContainsKey(topicId))
+            {
+                result[topicId] = 0;
+            }
+        }
+
+        return result;
+    }
 }

@@ -1,10 +1,15 @@
+using CommentsService.Application.Comments.GetActiveCommentsCount;
 using CommentsService.Application.Comments.GetCommentsByTopic;
 using CommentsService.Application.Comments.GetCommentsByTopic.Models;
 using Grpc.Core;
 using MediatR;
+using System.Linq;
 using CommentProto = OtusForum.CommentsService.Grpc.Comment;
+using GetActiveCommentsCountRequestProto = OtusForum.CommentsService.Grpc.GetActiveCommentsCountRequest;
+using GetActiveCommentsCountResponseProto = OtusForum.CommentsService.Grpc.GetActiveCommentsCountResponse;
 using GetCommentsByTopicRequestProto = OtusForum.CommentsService.Grpc.GetCommentsByTopicRequest;
 using GetCommentsByTopicResponseProto = OtusForum.CommentsService.Grpc.GetCommentsByTopicResponse;
+using TopicCommentCountProto = OtusForum.CommentsService.Grpc.TopicCommentCount;
 
 namespace CommentsService.API.Grpc;
 
@@ -36,6 +41,28 @@ public sealed class CommentsGrpcService : OtusForum.CommentsService.Grpc.Comment
         foreach (var comment in result.Comments)
         {
             response.Comments.Add(MapToCommentProto(comment));
+        }
+
+        return response;
+    }
+
+    public override async System.Threading.Tasks.Task<GetActiveCommentsCountResponseProto> GetActiveCommentsCount(
+        GetActiveCommentsCountRequestProto request,
+        ServerCallContext context)
+    {
+        var result = await _mediator.Send(
+            new GetActiveCommentsCountCommand(request.TopicIds.ToList()),
+            context.CancellationToken);
+
+        var response = new GetActiveCommentsCountResponseProto();
+
+        foreach (var kvp in result.TopicCounts)
+        {
+            response.TopicCounts.Add(new TopicCommentCountProto
+            {
+                TopicId = kvp.Key,
+                Count = kvp.Value
+            });
         }
 
         return response;
