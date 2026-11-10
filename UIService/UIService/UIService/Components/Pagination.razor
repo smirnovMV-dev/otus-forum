@@ -8,12 +8,21 @@
                 <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
                     <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage - 1)">@PreviousText</a>
                 </li>
-                @for (var i = 1; i <= TotalPages; i++)
+                @foreach (var page in VisiblePages)
                 {
-                    var pageNumber = i;
-                    <li class="page-item @(pageNumber == _currentPage ? "active" : "")">
-                        <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(pageNumber)">@pageNumber</a>
-                    </li>
+                    @if (page == -1)
+                    {
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    }
+                    else
+                    {
+                        var pageNumber = page;
+                        <li class="page-item @(pageNumber == _currentPage ? "active" : "")">
+                            <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
                 }
                 <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
                     <a class="page-link" href="javascript:void(0)" @onclick="() => OnPageChangedAsync(_currentPage + 1)">@NextText</a>
@@ -33,6 +42,59 @@
 
     private int _currentPage => CurrentPage;
     private int TotalPages => PageSize > 0 ? (int)Math.Ceiling(TotalCount / (double)PageSize) : 0;
+
+    private List<int> VisiblePages => GetVisiblePages(_currentPage, TotalPages);
+
+    private static List<int> GetVisiblePages(int currentPage, int totalPages)
+    {
+        var pages = new List<int>();
+
+        if (totalPages <= 9)
+        {
+            // Если страниц <= 9, показываем все
+            for (var i = 1; i <= totalPages; i++)
+            {
+                pages.Add(i);
+            }
+            return pages;
+        }
+
+        // Всегда добавляем первую страницу
+        pages.Add(1);
+
+        if (currentPage <= 4)
+        {
+            // В начале: 1, 2, 3, 4, 5, …, N
+            for (var i = 2; i <= 5; i++)
+            {
+                pages.Add(i);
+            }
+            pages.Add(-1); // многоточие
+            pages.Add(totalPages);
+        }
+        else if (currentPage >= totalPages - 3)
+        {
+            // В конце: 1, …, N-4, N-3, N-2, N-1, N
+            pages.Add(-1); // многоточие
+            for (var i = totalPages - 4; i <= totalPages - 1; i++)
+            {
+                pages.Add(i);
+            }
+            pages.Add(totalPages);
+        }
+        else // посередине: 1, …, N-2, N-1, N
+        {
+            pages.Add(-1); // многоточие
+            for (var i = currentPage - 1; i <= currentPage + 1; i++)
+            {
+                pages.Add(i);
+            }
+            pages.Add(-1); // многоточие
+            pages.Add(totalPages);
+        }
+
+        return pages;
+    }
 
     private async Task OnPageChangedAsync(int page)
     {
