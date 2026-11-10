@@ -2,13 +2,37 @@
 @rendermode InteractiveAuto
 
 <PageTitle>Главная — Otus Forum</PageTitle>
-
+@inject UIService.Services.AuthService AuthService
 
 <!-- ===== Hero-секция ===== -->
 <section class="hero-section">
     <div class="container text-center">
-        <h1 class="hero-title">Добро пожаловать в <span class="highlight">Otus Forum</span></h1>
-        <p class="hero-subtitle">Сообщество для обсуждения проектов, вопросов обучения и обмена опытом</p>
+        @if (AuthService.IsAuthenticated)
+        {
+            <h1 class="hero-title">Привет, <span class="highlight">@AuthService.Nickname</span>!</h1>
+            <p class="hero-subtitle">Сообщество для обсуждения проектов, вопросов обучения и обмена опытом</p>
+            <div class="hero-actions mt-4 d-flex justify-content-center gap-3">
+                <a href="/topics/new" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle me-1"></i>Создать тему
+                </a>
+                <a href="/topics" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-list-nested me-1"></i>К темам
+                </a>
+            </div>
+        }
+        else
+        {
+            <h1 class="hero-title">Добро пожаловать в <span class="highlight">Otus Forum</span></h1>
+            <p class="hero-subtitle">Сообщество для обсуждения проектов, вопросов обучения и обмена опытом</p>
+            <div class="hero-actions mt-4 d-flex justify-content-center gap-3">
+                <a href="/topics" class="btn btn-primary btn-lg">
+                    <i class="bi bi-list-nested me-1"></i>Смотреть темы
+                </a>
+                <a href="/login" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Войти
+                </a>
+            </div>
+        }
     </div>
 </section>
 
@@ -58,15 +82,6 @@
                         <i class="bi bi-list-nested nav-card-icon text-primary"></i>
                         <h5 class="mt-3 mb-1">Темы</h5>
                         <p class="text-muted small mb-0">Обсуждения и вопросы</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <a href="/users" class="nav-card card text-decoration-none">
-                    <div class="card-body text-center">
-                        <i class="bi bi-people nav-card-icon text-success"></i>
-                        <h5 class="mt-3 mb-1">Пользователи</h5>
-                        <p class="text-muted small mb-0">Участники сообщества</p>
                     </div>
                 </a>
             </div>

@@ -35,12 +35,22 @@ else
 {
     <div class="container mt-4">
         <div class="mb-3">
-            <a href="/topics" class="btn btn-link p-0 text-decoration-none">← Вернуться к списку тем</a>
+            <a href="/topics" class="text-decoration-none d-inline-flex align-items-center">
+                <i class="bi bi-arrow-left me-1"></i>Вернуться к темам
+            </a>
         </div>
 
         <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">@_topicWithComments.Title</h4>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">@_topicWithComments.Title</h4>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-chat-left-text me-1"></i>
+                        @_topicWithComments.Comments?.Count ?? 0 комментариев
+                    </span>
+                </div>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -63,14 +73,14 @@ else
                         }
                         <span class="text-muted small">
                             <i class="bi bi-clock me-1"></i>
-                            @_topicWithComments.CreatedAt.ToString("g")
+                            @_topicWithComments?.CreatedAt.ToString("g")
                         </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        @if (_topicWithComments?.Comments.Any() == true)
+        @if (_topicWithComments?.Comments is { Count: > 0 })
         {
             <h5 class="mb-3">
                 <i class="bi bi-chat-left-text me-2"></i>
@@ -84,7 +94,7 @@ else
             </div>
         }
 
-        @if (_topicWithComments?.Comments.Any() == true)
+        @if (_topicWithComments?.Comments is { Count: > 0 })
         {
             @* Комментарии уже приходят древовидными с вложенными Replies *@
             @foreach (var comment in _topicWithComments.Comments)
@@ -114,10 +124,7 @@ else
 
         @if (AuthService.IsAuthenticated)
         {
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Оставить комментарий</h5>
-                </div>
+            <div class="card mb-4 shadow-sm border-0">
                 <div class="card-body">
                     @if (!string.IsNullOrEmpty(_submitMessage))
                     {
@@ -127,13 +134,19 @@ else
                     }
 
                     <div class="mb-3">
-                        <label for="commentContent" class="form-label">Ваш комментарий</label>
-                        <textarea class="form-control" id="commentContent" rows="4" @bind="_commentContent" placeholder="Введите текст комментария..." maxlength="5000"></textarea>
-                        <div class="form-text text-muted">@(_commentContent.Length)/5000 символов</div>
+                        <label for="commentContent" class="form-label fw-semibold">
+                            <i class="bi bi-pencil me-1"></i>Написать комментарий
+                        </label>
+                        <textarea class="form-control" id="commentContent" rows="4" @bind="_commentContent"
+                                  placeholder="Введите текст комментария..." maxlength="5000"></textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <div class="form-text">Максимум 5000 символов</div>
+                            <div class="form-text">@(_commentContent.Length) / 5000</div>
+                        </div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button class="btn btn-success px-4" @onclick="SubmitCommentAsync" disabled="@_isSubmitting">
+                        <button class="btn btn-primary px-4" @onclick="SubmitCommentAsync" disabled="@(_isSubmitting || string.IsNullOrWhiteSpace(_commentContent))">
                             @if (_isSubmitting)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

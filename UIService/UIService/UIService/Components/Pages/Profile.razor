@@ -28,16 +28,9 @@
     {
         <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="password-tab" data-bs-toggle="tab"
-                        data-bs-target="#password-panel" type="button" role="tab"
-                        aria-controls="password-panel" aria-selected="true">
-                    <i class="bi bi-key me-1"></i>Смена пароля
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="topics-tab" data-bs-toggle="tab"
+                <button class="nav-link active" id="topics-tab" data-bs-toggle="tab"
                         data-bs-target="#topics-panel" type="button" role="tab"
-                        aria-controls="topics-panel" aria-selected="false">
+                        aria-controls="topics-panel" aria-selected="true">
                     <i class="bi bi-list-nested me-1"></i>Мои темы
                 </button>
             </li>
@@ -48,67 +41,18 @@
                     <i class="bi bi-chat-dots me-1"></i>Мои комментарии
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="password-tab" data-bs-toggle="tab"
+                        data-bs-target="#password-panel" type="button" role="tab"
+                        aria-controls="password-panel" aria-selected="false">
+                    <i class="bi bi-key me-1"></i>Смена пароля
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="profileTabContent">
-            <!-- Change Password Tab -->
-            <div class="tab-pane fade show active" id="password-panel" role="tabpanel" aria-labelledby="password-tab">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">Смена пароля</h5>
-
-                        @if (!string.IsNullOrEmpty(_passwordMessage))
-                        {
-                            <div class="alert @_passwordMessageType" role="alert">
-                                @_passwordMessage
-                            </div>
-                        }
-
-                        <EditForm Model="@_passwordForm" OnValidSubmit="HandlePasswordChange" FormName="PasswordForm">
-                            <DataAnnotationsValidator />
-
-                            <div class="mb-3">
-                                <label for="currentPassword" class="form-label">Текущий пароль</label>
-                                <InputText id="currentPassword" class="form-control"
-                                           @bind-Value="_passwordForm.CurrentPassword"
-                                           type="password" />
-                                <ValidationMessage For="(() => _passwordForm.CurrentPassword)" class="text-danger" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="newPassword" class="form-label">Новый пароль</label>
-                                <InputText id="newPassword" class="form-control"
-                                           @bind-Value="_passwordForm.NewPassword"
-                                           type="password" />
-                                <ValidationMessage For="(() => _passwordForm.NewPassword)" class="text-danger" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="confirmPassword" class="form-label">Подтверждение пароля</label>
-                                <InputText id="confirmPassword" class="form-control"
-                                           @bind-Value="_passwordForm.ConfirmPassword"
-                                           type="password" />
-                                <ValidationMessage For="(() => _passwordForm.ConfirmPassword)" class="text-danger" />
-                            </div>
-
-                            <button type="submit" class="btn btn-primary" disabled="@_isPasswordSubmitting">
-                                @if (_isPasswordSubmitting)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                    <span>Сохранение...</span>
-                                }
-                                else
-                                {
-                                    <span>Сохранить</span>
-                                }
-                            </button>
-                        </EditForm>
-                    </div>
-                </div>
-            </div>
-
             <!-- My Topics Tab -->
-            <div class="tab-pane fade" id="topics-panel" role="tabpanel" aria-labelledby="topics-tab">
+            <div class="tab-pane fade show active" id="topics-panel" role="tabpanel" aria-labelledby="topics-tab">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title mb-3">Мои темы</h5>
@@ -213,6 +157,62 @@
 
                             <Pagination CurrentPage="_currentCommentPage" TotalCount="_totalCommentsCount" PageSize="_commentPageSize" OnPageChanged="OnCommentPageChanged" />
                         }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Tab -->
+            <div class="tab-pane fade" id="password-panel" role="tabpanel" aria-labelledby="password-tab">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Смена пароля</h5>
+
+                        @if (!string.IsNullOrEmpty(_passwordMessage))
+                        {
+                            <div class="alert @_passwordMessageType" role="alert">
+                                @_passwordMessage
+                            </div>
+                        }
+
+                        <EditForm Model="@_passwordForm" OnValidSubmit="HandlePasswordChange" FormName="PasswordForm">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">Текущий пароль</label>
+                                <InputText id="currentPassword" class="form-control"
+                                           @bind-Value="_passwordForm.CurrentPassword"
+                                           type="password" />
+                                <ValidationMessage For="(() => _passwordForm.CurrentPassword)" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">Новый пароль</label>
+                                <InputText id="newPassword" class="form-control"
+                                           @bind-Value="_passwordForm.NewPassword"
+                                           type="password" />
+                                <ValidationMessage For="(() => _passwordForm.NewPassword)" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Подтверждение пароля</label>
+                                <InputText id="confirmPassword" class="form-control"
+                                           @bind-Value="_passwordForm.ConfirmPassword"
+                                           type="password" />
+                                <ValidationMessage For="(() => _passwordForm.ConfirmPassword)" class="text-danger" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" disabled="@_isPasswordSubmitting">
+                                @if (_isPasswordSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Сохранение...</span>
+                                }
+                                else
+                                {
+                                    <span>Сохранить</span>
+                                }
+                            </button>
+                        </EditForm>
                     </div>
                 </div>
             </div>

@@ -142,22 +142,38 @@
     background-color: rgba(255, 255, 255, 0.15);
 }
 
-.logout-btn
-{
-    color: #d7d7d7;
-    background: none;
-    border: none;
-    border-radius: 4px;
-    height: 3rem;
-    display: flex;
-    align-items: center;
-    line-height: 3rem;
-    width: 100%;
-    font-size: 0.9rem;
+/* User dropdown menu */
+.user-info .dropdown-menu {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.375rem;
+    padding: 0.25rem 0;
+    min-width: 160px;
 }
 
-.logout-btn:hover
-{
-    background-color: rgba(255,255,255,0.1);
+.user-info .dropdown-item {
+    color: #d7d7d7;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.user-info .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
+}
+
+.user-info .dropdown-item.text-danger {
+    color: #dc3545;
+}
+
+.user-info .dropdown-item.text-danger:hover {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #ff6b7a;
+}
+
+.user-info .dropdown-divider {
+    border-top-color: rgba(255, 255, 255, 0.15);
+    margin: 0.25rem 0;
 }

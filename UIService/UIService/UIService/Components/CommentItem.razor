@@ -22,6 +22,12 @@
                     <i class="bi bi-person me-1"></i>
                     @Comment.AuthorNickname
                 </span>
+                @if (ReplyDepth > 0)
+                {
+                    <span class="badge bg-secondary me-2">
+                        <i class="bi bi-reply me-1"></i>Ответ
+                    </span>
+                }
                 <small class="text-muted ms-2">
                     <i class="bi bi-clock me-1"></i>
                     @Comment.CreatedAt.ToString("g")
