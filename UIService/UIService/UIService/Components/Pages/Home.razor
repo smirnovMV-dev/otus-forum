@@ -34,6 +34,15 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="stat-card card h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-chat-quote stat-icon text-warning"></i>
+                        <div class="stat-value">@commentCount</div>
+                        <div class="stat-label">Комментариев</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -143,6 +152,7 @@
 @code {
     private int topicCount = 0;
     private int userCount = 0;
+    private int commentCount = 0;
     private List<LatestTopicsResponse> latestTopics = new();
     private bool loading = true;
     private string? error;
@@ -153,6 +163,7 @@
 
     [Inject] private ITopicsClient TopicsClient { get; set; } = default!;
     [Inject] private IUsersClient UsersClient { get; set; } = default!;
+    [Inject] private ICommentsClient CommentsClient { get; set; } = default!;
 
     private async Task LoadTopicsAsync(int page)
     {
@@ -187,6 +198,9 @@
 
             // Загружаем реальное количество пользователей
             userCount = await UsersClient.CountUsersAsync();
+
+            // Загружаем количество комментариев
+            commentCount = await CommentsClient.CountAsync();
 
             loading = false;
         }

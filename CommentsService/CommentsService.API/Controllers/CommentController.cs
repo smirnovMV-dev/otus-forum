@@ -2,6 +2,7 @@ using CommentsService.API.Models.Comments.CreateComment;
 using CommentsService.API.Models.Comments.DeleteComment;
 using CommentsService.API.Models.Comments.GetCommentsByUserId;
 using CommentsService.API.Models.Comments.UpdateComment;
+using CommentsService.Application.Comments.CountComments;
 using CommentsService.Application.Comments.CreateComment;
 using CommentsService.Application.Comments.DeleteComment;
 using CommentsService.Application.Comments.GetCommentsByUserId;
@@ -104,5 +105,12 @@ public class CommentController : ControllerBase
             })],
             TotalCount = results.TotalCount
         };
+    }
+
+    [HttpGet("Count")]
+    public async Task<int> Count()
+    {
+        var command = new CountCommentsCommand();
+        return await _mediator.Send(command);
     }
 }

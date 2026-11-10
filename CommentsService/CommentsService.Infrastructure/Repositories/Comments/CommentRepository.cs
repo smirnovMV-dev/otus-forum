@@ -178,4 +178,11 @@ internal sealed class CommentRepository : ICommentRepository
             return ([], []);
         }
     }
+
+    public async Task<int> CountAsync(
+        CancellationToken cancellationToken)
+    {
+        return await _context.Comments
+            .CountAsync(c => !c.IsDeleted, cancellationToken);
+    }
 }

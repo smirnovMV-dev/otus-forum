@@ -37,4 +37,7 @@ public interface ICommentRepository
         int page,
         int pageSize,
         CancellationToken cancellationToken);
+
+    Task<int> CountAsync(
+        CancellationToken cancellationToken);
 }
