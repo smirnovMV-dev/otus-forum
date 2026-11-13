@@ -1152,6 +1152,10 @@ namespace OtusForum.UI.Clients.Topics
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^-?(?:0|[1-9]\d*)$")]
         public long AuthorId { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("authorNickname")]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        public string AuthorNickname { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         public System.DateTimeOffset CreatedAt { get; set; }

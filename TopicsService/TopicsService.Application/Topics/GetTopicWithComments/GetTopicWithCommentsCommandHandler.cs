@@ -49,9 +49,14 @@ internal sealed class GetTopicWithCommentsCommandHandler
             .GetCommentsByTopicIdAsync(command.TopicId, command.Page, command.PageSize, cancellationToken);
 
         var authorIds = comments.Select(c => c.AuthorId).Distinct().ToHashSet();
+        authorIds.Add(topic.AuthorId);
         var nicknames = await _usersApiServiceAdapter.GetUsersNicknamesAsync(authorIds, cancellationToken);
 
         var commentResults = comments.Select(c => MapToCommentResult(c, nicknames, command)).ToList();
+
+        var topicAuthorNickname = nicknames.TryGetValue(topic.AuthorId, out var topicNick)
+            ? topicNick.Nickname
+            : "Неизвестный пользователь";
 
         var canEdit = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
         var canDelete = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
@@ -60,6 +65,7 @@ internal sealed class GetTopicWithCommentsCommandHandler
             topic.Id,
             topic.Title,
             topic.AuthorId,
+            topicAuthorNickname,
             topic.CreatedAt,
             commentResults,
             canEdit,

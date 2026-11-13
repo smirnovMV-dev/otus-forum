@@ -107,6 +107,7 @@ public class TopicController : ControllerBase
             TopicId = result.TopicId,
             Title = result.Title,
             AuthorId = result.AuthorId,
+            AuthorNickname = result.AuthorNickname,
             CreatedAt = result.CreatedAt,
             Comments = [.. result.Comments.Select(MapCommentResponse)],
             CanEdit = result.CanEdit,

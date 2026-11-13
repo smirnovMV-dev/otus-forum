@@ -8,6 +8,7 @@ public sealed class GetTopicWithCommentsResponse
     public required long TopicId { get; set; }
     public required string Title { get; set; }
     public required long AuthorId { get; set; }
+    public required string AuthorNickname { get; set; }
     public required DateTimeOffset CreatedAt { get; set; }
     public required IReadOnlyCollection<CommentResponse> Comments { get; set; }
     public bool CanEdit { get; set; }

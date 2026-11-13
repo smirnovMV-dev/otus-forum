@@ -7,6 +7,7 @@ public sealed record GetTopicWithCommentsResult(
     long TopicId,
     string Title,
     long AuthorId,
+    string AuthorNickname,
     DateTimeOffset CreatedAt,
     IReadOnlyCollection<CommentResult> Comments,
     bool CanEdit,
