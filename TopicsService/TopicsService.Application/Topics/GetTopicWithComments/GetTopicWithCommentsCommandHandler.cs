@@ -48,7 +48,17 @@ internal sealed class GetTopicWithCommentsCommandHandler
         var comments = await _commentsApiServiceAdapter
             .GetCommentsByTopicIdAsync(command.TopicId, command.Page, command.PageSize, cancellationToken);
 
-        var authorIds = comments.Select(c => c.AuthorId).Distinct().ToHashSet();
+        var allAuthors = new HashSet<long>();
+        void CollectAuthorIds(IEnumerable<CommentDto> items)
+        {
+            foreach (var c in items)
+            {
+                allAuthors.Add(c.AuthorId);
+                if (c.Replies.Any()) CollectAuthorIds(c.Replies);
+            }
+        }
+        CollectAuthorIds(comments);
+        var authorIds = allAuthors.ToHashSet();
         authorIds.Add(topic.AuthorId);
         var nicknames = await _usersApiServiceAdapter.GetUsersNicknamesAsync(authorIds, cancellationToken);
 

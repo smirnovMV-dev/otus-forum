@@ -157,7 +157,7 @@ internal sealed class CommentRepository : ICommentRepository
                         SELECT id, topic_id, parent_comment_id, author_id, content, created_at, updated_at,
                                updated_by_user_id, is_deleted, deleted_at
                         FROM public.comments
-                        WHERE parent_comment_id = ANY({0})
+                        WHERE parent_comment_id = ANY({0}) AND topic_id = {1}
 
                         UNION ALL
 
@@ -165,8 +165,9 @@ internal sealed class CommentRepository : ICommentRepository
                                c.updated_by_user_id, c.is_deleted, c.deleted_at
                         FROM public.comments c
                         INNER JOIN CommentTree ct ON c.parent_comment_id = ct.id
+                        WHERE c.topic_id = {1}
                     )
-                    SELECT * FROM CommentTree", rootIds.ToArray())
+                    SELECT * FROM CommentTree", rootIds.ToArray(), topicId)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
