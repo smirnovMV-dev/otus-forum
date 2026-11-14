@@ -1,4 +1,3 @@
-using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using OtusForum.CommentsService.Grpc;
 using System;
@@ -7,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TopicsService.Application.Services.Externals.CommentsApiService.Models;
-using CommentProto = OtusForum.CommentsService.Grpc.Comment;
 using GetActiveCommentsCountRequestProto = OtusForum.CommentsService.Grpc.GetActiveCommentsCountRequest;
 
 namespace TopicsService.Application.Services.Externals.CommentsApiService;
