@@ -8,14 +8,17 @@
 @* Компонент для отображения одного комментария и его ответов *@
 @{
     var commentId = Comment.Id;
-    var replies = Comment.Replies?.ToList() ?? new List<CommentResponse>();
     var isReplying = ReplyToCommentId == commentId;
     var isEditing = EditCommentId == commentId;
 
+    // Вычисляем видимые replies
+    var visibleReplies = _isExpanded 
+        ? GetAllRepliesForComment(Comment)
+        : GetFirstPageReplies(Comment);
 }
 
-<div class="card mb-2 shadow-sm @(ReplyDepth > 0 ? "comment-reply" : "")">
-    <div class="card-body @(ReplyDepth > 0 ? "border-start border-2 border-primary ps-2" : "")">
+<div class="card comment-item @(ReplyDepth > 0 ? "comment-reply" : "shadow-sm")">
+    <div class="card-body @(ReplyDepth > 0 ? "comment-reply-body" : "")">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
                 <span class="badge bg-info me-2">
@@ -28,7 +31,7 @@
                 </small>
             </div>
         </div>
-        <p class="card-text mb-2">@Comment.Content</p>
+        <p class="card-text comment-content">@Comment.Content</p>
         
         @if (isEditing)
         {
@@ -117,12 +120,32 @@
             </div>
         }
 
-        @if (replies.Any())
+        @if (visibleReplies.Any())
         {
-            <div class="mt-2">
-                @foreach (var reply in replies)
+            <div class="replies-container">
+                @foreach (var reply in visibleReplies)
                 {
                     <CommentItem Comment="reply" TopicId="TopicId" ReplyDepth="ReplyDepth + 1" />
+                }
+
+                @if (Comment.Replies.Count > visibleReplies.Count)
+                {
+                    <div class="text-center mt-2">
+                        @if (!_isExpanded)
+                        {
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleExpand">
+                                <i class="bi bi-chevron-down me-1"></i>
+                                Показать ещё (@(Comment.Replies.Count - visibleReplies.Count) ответов)
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleExpand">
+                                <i class="bi bi-chevron-up me-1"></i>
+                                Скрыть
+                            </button>
+                        }
+                    </div>
                 }
             </div>
         }
@@ -133,6 +156,9 @@
     [Parameter] public CommentResponse Comment { get; set; } = default!;
     [Parameter] public long TopicId { get; set; }
     [Parameter] public int ReplyDepth { get; set; } = 0;
+
+    private bool _isExpanded = false;
+    private const int _repliesPageSize = 5;
 
     private string _replyContent = string.Empty;
     private bool _isReplySubmitting = false;
@@ -208,6 +234,24 @@
         _editCommentId = null;
         _editContent = string.Empty;
         _editMessage = null;
+    }
+
+    private void ToggleExpand()
+    {
+        _isExpanded = !_isExpanded;
+        StateHasChanged();
+    }
+
+    private List<CommentResponse> GetFirstPageReplies(CommentResponse comment)
+    {
+        if (comment.Replies == null) return new List<CommentResponse>();
+        return comment.Replies.Take(_repliesPageSize).ToList();
+    }
+
+    private List<CommentResponse> GetAllRepliesForComment(CommentResponse comment)
+    {
+        if (comment.Replies == null) return new List<CommentResponse>();
+        return comment.Replies.ToList();
     }
 
     private async Task SubmitEditAsync()

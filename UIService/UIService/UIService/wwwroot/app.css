@@ -62,6 +62,27 @@ h1:focus {
 /* Стили для вложенных комментариев */
 .comment-reply {
     background-color: #f8f9fa;
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+    margin-top: 0.25rem !important;
+}
+
+.comment-reply .card-body,
+.comment-reply-body {
+    padding: 0.375rem 0.5rem !important;
+}
+
+.replies-container {
+    margin-top: 0.25rem !important;
+}
+
+.comment-item {
+    margin-bottom: 0 !important;
+}
+
+.comment-content {
+    margin-bottom: 0 !important;
 }
 
 .comments-list {
