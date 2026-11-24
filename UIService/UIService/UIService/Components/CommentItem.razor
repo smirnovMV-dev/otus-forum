@@ -1,7 +1,7 @@
 @using System.Collections.Generic
-@using System.Linq
 @using OtusForum.UI.Clients.Comments
 @inject ICommentsClient CommentsClient
+@inject ITopicsClient TopicsClient
 @inject UIService.Services.AuthService AuthService
 @inject UIService.Services.CommentRefreshService CommentRefreshService
 
@@ -10,11 +10,6 @@
     var commentId = Comment.Id;
     var isReplying = ReplyToCommentId == commentId;
     var isEditing = EditCommentId == commentId;
-
-    // Вычисляем видимые replies
-    var visibleReplies = _isExpanded 
-        ? GetAllRepliesForComment(Comment)
-        : GetFirstPageReplies(Comment);
 }
 
 <div class="card comment-item @(ReplyDepth > 0 ? "comment-reply" : "shadow-sm")">
@@ -120,29 +115,43 @@
             </div>
         }
 
-        @if (visibleReplies.Any())
+        @if (_replies.Count > 0 || HasHiddenReplies)
         {
             <div class="replies-container">
-                @foreach (var reply in visibleReplies)
+                @foreach (var reply in _replies)
                 {
-                    <CommentItem Comment="reply" TopicId="TopicId" ReplyDepth="ReplyDepth + 1" />
+                    <CommentItem @key="reply.Id" Comment="reply" TopicId="TopicId" ReplyDepth="ReplyDepth + 1" />
                 }
 
-                @if (Comment.Replies.Count > visibleReplies.Count)
+                @if (!string.IsNullOrEmpty(_repliesMessage))
                 {
-                    <div class="text-center mt-2">
-                        @if (!_isExpanded)
+                    <div class="alert alert-danger mt-2 mb-0 py-2" role="alert">
+                        @_repliesMessage
+                    </div>
+                }
+
+                @if (HasHiddenReplies || CanCollapseReplies)
+                {
+                    <div class="d-flex justify-content-center gap-2 mt-2">
+                        @if (HasHiddenReplies)
                         {
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleExpand">
-                                <i class="bi bi-chevron-down me-1"></i>
-                                Показать ещё (@(Comment.Replies.Count - visibleReplies.Count) ответов)
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="ShowMoreRepliesAsync" disabled="@_isLoadingReplies">
+                                @if (_isLoadingReplies)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-chevron-down me-1"></i>
+                                }
+                                <span>@ShowMoreRepliesText</span>
                             </button>
                         }
-                        else
+                        @if (CanCollapseReplies)
                         {
-                            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleExpand">
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="CollapseReplies">
                                 <i class="bi bi-chevron-up me-1"></i>
-                                Скрыть
+                                <span>Свернуть</span>
                             </button>
                         }
                     </div>
@@ -157,8 +166,23 @@
     [Parameter] public long TopicId { get; set; }
     [Parameter] public int ReplyDepth { get; set; } = 0;
 
-    private bool _isExpanded = false;
-    private const int _repliesPageSize = 5;
+    private const int RepliesPageSize = 5;
+
+    private List<CommentResponse> _replies = [];
+    private List<CommentResponse> _previewReplies = [];
+    private int _repliesTotalCount;
+    private int _loadedRepliesPage;
+    private bool _isLoadingReplies;
+    private string? _repliesMessage;
+    private CommentResponse? _sourceComment;
+
+    private bool HasHiddenReplies => _repliesTotalCount > _replies.Count;
+
+    private bool CanCollapseReplies => _replies.Count > _previewReplies.Count;
+
+    private string ShowMoreRepliesText => _replies.Count == 0
+        ? $"Показать ответы ({_repliesTotalCount})"
+        : $"Показать ещё ({_repliesTotalCount - _replies.Count})";
 
     private string _replyContent = string.Empty;
     private bool _isReplySubmitting = false;
@@ -191,6 +215,23 @@
             _replyToCommentId = value;
             StateHasChanged();
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Перезагружаем только при получении нового экземпляра комментария
+        if (ReferenceEquals(_sourceComment, Comment))
+        {
+            return;
+        }
+
+        _sourceComment = Comment;
+        _previewReplies = [.. Comment.Replies];
+        _replies = [.. _previewReplies];
+        _repliesTotalCount = Math.Max(Comment.RepliesTotalCount, _previewReplies.Count);
+        _loadedRepliesPage = _previewReplies.Count > 0 ? 1 : 0;
+        _repliesMessage = null;
+        _isLoadingReplies = false;
     }
 
     private void ToggleReply()
@@ -236,22 +277,51 @@
         _editMessage = null;
     }
 
-    private void ToggleExpand()
+    private async Task ShowMoreRepliesAsync()
     {
-        _isExpanded = !_isExpanded;
-        StateHasChanged();
+        if (_isLoadingReplies)
+        {
+            return;
+        }
+
+        _isLoadingReplies = true;
+        _repliesMessage = null;
+
+        try
+        {
+            var nextPage = _loadedRepliesPage + 1;
+            var page = await TopicsClient.GetRepliesAsync(
+                Comment.Id,
+                nextPage,
+                RepliesPageSize,
+                AuthService.UserId,
+                AuthService.IsAdmin,
+                AuthService.IsModerator);
+
+            if (page.Comments.Count == 0)
+            {
+                _repliesMessage = "Не удалось загрузить ответы. Попробуйте ещё раз.";
+                return;
+            }
+
+            _replies.AddRange(page.Comments);
+            _repliesTotalCount = page.TotalCount;
+            _loadedRepliesPage = nextPage;
+        }
+        catch (Exception ex)
+        {
+            _repliesMessage = $"Не удалось загрузить ответы: {ex.Message}";
+        }
+        finally
+        {
+            _isLoadingReplies = false;
+        }
     }
 
-    private List<CommentResponse> GetFirstPageReplies(CommentResponse comment)
+    private void CollapseReplies()
     {
-        if (comment.Replies == null) return new List<CommentResponse>();
-        return comment.Replies.Take(_repliesPageSize).ToList();
-    }
-
-    private List<CommentResponse> GetAllRepliesForComment(CommentResponse comment)
-    {
-        if (comment.Replies == null) return new List<CommentResponse>();
-        return comment.Replies.ToList();
+        _replies = [.. _previewReplies];
+        _loadedRepliesPage = _previewReplies.Count > 0 ? 1 : 0;
     }
 
     private async Task SubmitEditAsync()

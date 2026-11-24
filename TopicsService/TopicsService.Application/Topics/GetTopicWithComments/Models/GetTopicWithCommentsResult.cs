@@ -10,6 +10,7 @@ public sealed record GetTopicWithCommentsResult(
     string AuthorNickname,
     DateTimeOffset CreatedAt,
     IReadOnlyCollection<CommentResult> Comments,
+    int TotalCount,
     bool CanEdit,
     bool CanDelete);
 
@@ -22,4 +23,5 @@ public sealed record CommentResult(
     DateTimeOffset CreatedAt,
     bool CanEdit,
     bool CanDelete,
-    IReadOnlyCollection<CommentResult> Replies);
+    IReadOnlyCollection<CommentResult> Replies,
+    int RepliesTotalCount);

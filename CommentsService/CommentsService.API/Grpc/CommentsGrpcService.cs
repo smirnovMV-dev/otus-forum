@@ -1,6 +1,7 @@
 using CommentsService.Application.Comments.GetActiveCommentsCount;
 using CommentsService.Application.Comments.GetCommentsByTopic;
 using CommentsService.Application.Comments.GetCommentsByTopic.Models;
+using CommentsService.Application.Comments.GetRepliesByParentId;
 using Grpc.Core;
 using MediatR;
 using System.Linq;
@@ -9,6 +10,8 @@ using GetActiveCommentsCountRequestProto = OtusForum.CommentsService.Grpc.GetAct
 using GetActiveCommentsCountResponseProto = OtusForum.CommentsService.Grpc.GetActiveCommentsCountResponse;
 using GetCommentsByTopicRequestProto = OtusForum.CommentsService.Grpc.GetCommentsByTopicRequest;
 using GetCommentsByTopicResponseProto = OtusForum.CommentsService.Grpc.GetCommentsByTopicResponse;
+using GetRepliesRequestProto = OtusForum.CommentsService.Grpc.GetRepliesRequest;
+using GetRepliesResponseProto = OtusForum.CommentsService.Grpc.GetRepliesResponse;
 using TopicCommentCountProto = OtusForum.CommentsService.Grpc.TopicCommentCount;
 
 namespace CommentsService.API.Grpc;
@@ -68,6 +71,30 @@ public sealed class CommentsGrpcService : OtusForum.CommentsService.Grpc.Comment
         return response;
     }
 
+    public override async System.Threading.Tasks.Task<GetRepliesResponseProto> GetReplies(
+        GetRepliesRequestProto request,
+        ServerCallContext context)
+    {
+        var page = request.Page > 0 ? request.Page : 1;
+        var pageSize = request.PageSize > 0 ? request.PageSize : 5;
+
+        var result = await _mediator.Send(
+            new GetRepliesByParentIdCommand(request.ParentCommentId, page, pageSize),
+            context.CancellationToken);
+
+        var response = new GetRepliesResponseProto
+        {
+            TotalCount = result.TotalCount
+        };
+
+        foreach (var reply in result.Replies)
+        {
+            response.Comments.Add(MapToCommentProto(reply));
+        }
+
+        return response;
+    }
+
     private CommentProto MapToCommentProto(CommentTreeDto dto)
     {
         var proto = new CommentProto
@@ -77,7 +104,8 @@ public sealed class CommentsGrpcService : OtusForum.CommentsService.Grpc.Comment
             AuthorId = dto.AuthorId,
             Content = dto.Content,
             CreatedAt = dto.CreatedAt,
-            UpdatedAt = dto.UpdatedAt
+            UpdatedAt = dto.UpdatedAt,
+            RepliesTotalCount = dto.RepliesTotalCount
         };
 
         if (dto.ParentCommentId.HasValue)

@@ -7,8 +7,14 @@ namespace TopicsService.Application.Services.Externals.CommentsApiService;
 
 internal interface ICommentsApiServiceAdapter
 {
-    Task<IReadOnlyCollection<CommentDto>> GetCommentsByTopicIdAsync(
+    Task<PagedCommentsDto> GetCommentsByTopicIdAsync(
         long topicId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken);
+
+    Task<PagedCommentsDto> GetRepliesAsync(
+        long parentCommentId,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

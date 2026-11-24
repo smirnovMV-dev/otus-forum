@@ -32,8 +32,15 @@ public interface ICommentRepository
         int pageSize,
         CancellationToken cancellationToken);
 
-    Task<(IReadOnlyCollection<Comment> RootComments, IReadOnlyCollection<Comment> ChildComments)> GetPagedCommentTreeAsync(
+    Task<CommentTreePage> GetCommentTreePageAsync(
         long topicId,
+        int page,
+        int pageSize,
+        int repliesPreviewSize,
+        CancellationToken cancellationToken);
+
+    Task<PagedRepliesResult> GetPagedRepliesAsync(
+        long parentCommentId,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

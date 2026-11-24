@@ -5,10 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TopicsService.Application.Comments;
 using TopicsService.Application.Services.Externals.CommentsApiService;
 using TopicsService.Application.Services.Externals.CommentsApiService.Models;
 using TopicsService.Application.Services.Externals.UsersApiService;
-using TopicsService.Application.Services.Externals.UsersApiService.Models;
 using TopicsService.Application.Topics.GetTopicWithComments.Models;
 using TopicsService.Infrastructure.Repositories.Topics;
 
@@ -45,7 +45,7 @@ internal sealed class GetTopicWithCommentsCommandHandler
             throw new KeyNotFoundException($"Тема с ID {command.TopicId} не найдена");
         }
 
-        var comments = await _commentsApiServiceAdapter
+        var commentsPage = await _commentsApiServiceAdapter
             .GetCommentsByTopicIdAsync(command.TopicId, command.Page, command.PageSize, cancellationToken);
 
         var allAuthors = new HashSet<long>();
@@ -57,12 +57,14 @@ internal sealed class GetTopicWithCommentsCommandHandler
                 if (c.Replies.Any()) CollectAuthorIds(c.Replies);
             }
         }
-        CollectAuthorIds(comments);
+        CollectAuthorIds(commentsPage.Comments);
         var authorIds = allAuthors.ToHashSet();
         authorIds.Add(topic.AuthorId);
         var nicknames = await _usersApiServiceAdapter.GetUsersNicknamesAsync(authorIds, cancellationToken);
 
-        var commentResults = comments.Select(c => MapToCommentResult(c, nicknames, command)).ToList();
+        var commentResults = commentsPage.Comments
+            .Select(c => CommentResultMapper.Map(c, nicknames, command.UserId, command.IsAdmin, command.IsModerator))
+            .ToList();
 
         var topicAuthorNickname = nicknames.TryGetValue(topic.AuthorId, out var topicNick)
             ? topicNick.Nickname
@@ -78,28 +80,8 @@ internal sealed class GetTopicWithCommentsCommandHandler
             topicAuthorNickname,
             topic.CreatedAt,
             commentResults,
+            commentsPage.TotalCount,
             canEdit,
             canDelete);
-    }
-
-    private CommentResult MapToCommentResult(
-        CommentDto dto,
-        IReadOnlyDictionary<long, UserNickname> nicknames,
-        GetTopicWithCommentsCommand command)
-    {
-        var commentCanEdit = command.UserId == dto.AuthorId || command.IsAdmin || command.IsModerator;
-        var commentCanDelete = command.UserId == dto.AuthorId || command.IsAdmin;
-
-        return new CommentResult(
-            dto.Id,
-            dto.TopicId,
-            dto.ParentCommentId,
-            nicknames.TryGetValue(dto.AuthorId, out var nick) ? nick.Nickname : "Неизвестный пользователь",
-            dto.Content,
-            DateTimeOffset.Parse(dto.CreatedAt),
-            commentCanEdit,
-            commentCanDelete,
-            dto.Replies.Select(r => MapToCommentResult(r, nicknames, command))
-                .ToList() as IReadOnlyCollection<CommentResult>);
     }
 }

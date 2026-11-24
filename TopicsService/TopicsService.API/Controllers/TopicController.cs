@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
 using TopicsService.API.Models.Topics.CreateTopic;
+using TopicsService.API.Models.Topics.GetCommentReplies;
 using TopicsService.API.Models.Topics.GetLatestTopics;
 using TopicsService.API.Models.Topics.GetTopicWithComments;
 using TopicsService.API.Models.Topics.GetTopics;
 using TopicsService.API.Models.Topics.GetTopicsByUserId;
 using TopicsService.API.Models.Topics.UpdateTopic;
+using TopicsService.Application.Comments.GetCommentReplies;
 using TopicsService.Application.Topics.CreateTopic;
 using TopicsService.Application.Topics.DeleteTopic;
 using TopicsService.Application.Topics.GetLatestTopics;
@@ -110,8 +112,28 @@ public class TopicController : ControllerBase
             AuthorNickname = result.AuthorNickname,
             CreatedAt = result.CreatedAt,
             Comments = [.. result.Comments.Select(MapCommentResponse)],
+            TotalCount = result.TotalCount,
             CanEdit = result.CanEdit,
             CanDelete = result.CanDelete
+        };
+    }
+
+    [HttpGet("comments/{commentId:long}/replies")]
+    public async Task<GetCommentRepliesResponse> GetReplies(
+        long commentId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 5,
+        [FromHeader(Name = "X-UserId")] long userId = 0,
+        [FromHeader(Name = "X-IsAdmin")] bool isAdmin = false,
+        [FromHeader(Name = "X-IsModerator")] bool isModerator = false)
+    {
+        var command = new GetCommentRepliesCommand(commentId, userId, isAdmin, isModerator, page, pageSize);
+        var result = await _mediator.Send(command);
+
+        return new GetCommentRepliesResponse
+        {
+            Comments = [.. result.Comments.Select(MapCommentResponse)],
+            TotalCount = result.TotalCount
         };
     }
 
@@ -127,7 +149,8 @@ public class TopicController : ControllerBase
             CreatedAt = result.CreatedAt,
             CanEdit = result.CanEdit,
             CanDelete = result.CanDelete,
-            Replies = [.. result.Replies.Select(MapCommentResponse)]
+            Replies = [.. result.Replies.Select(MapCommentResponse)],
+            RepliesTotalCount = result.RepliesTotalCount
         };
     }
 

@@ -1,4 +1,3 @@
-using CommentsService.Domain.Entities;
 using CommentsService.Infrastructure.Repositories.Comments;
 using MediatR;
 using System;
@@ -30,15 +29,20 @@ internal sealed class UpdateCommentCommandHandler : IRequestHandler<UpdateCommen
         UpdateCommentCommand command,
         CancellationToken cancellationToken)
     {
-        var comment = Comment.Create(
-            topicId: 0,
-            parentCommentId: null,
-            command.UpdatedByUserId,
-            command.Content,
-            DateTimeOffset.UtcNow);
+        var comment = await _commentRepository.GetByIdAsync(
+            command.CommentId,
+            cancellationToken);
 
-        comment.SetId(command.CommentId);
-        comment.Update(command.TopicId, command.ParentCommentId, command.Content, DateTimeOffset.UtcNow, command.UpdatedByUserId);
+        if (comment is null)
+        {
+            return -1;
+        }
+
+        // Перевешивание комментария в другую ветку не поддерживается
+        comment.Update(
+            command.Content,
+            DateTimeOffset.UtcNow,
+            command.UpdatedByUserId);
 
         return await _commentRepository.UpdateAsync(
             comment,

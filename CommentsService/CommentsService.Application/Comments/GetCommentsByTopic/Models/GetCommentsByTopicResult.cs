@@ -14,4 +14,5 @@ public sealed record CommentTreeDto(
     string Content,
     string CreatedAt,
     string UpdatedAt,
-    IReadOnlyCollection<CommentTreeDto> Replies);
+    IReadOnlyCollection<CommentTreeDto> Replies,
+    int RepliesTotalCount);

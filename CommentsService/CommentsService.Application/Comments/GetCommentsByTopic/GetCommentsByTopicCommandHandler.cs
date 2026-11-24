@@ -2,6 +2,7 @@ using CommentsService.Application.Comments.GetCommentsByTopic.Models;
 using CommentsService.Domain.Entities;
 using CommentsService.Infrastructure.Repositories.Comments;
 using MediatR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,6 +13,9 @@ namespace CommentsService.Application.Comments.GetCommentsByTopic;
 internal sealed class GetCommentsByTopicCommandHandler
     : IRequestHandler<GetCommentsByTopicCommand, GetCommentsByTopicResult>
 {
+    // Ответы, отдаваемые вместе с корневым комментарием до подгрузки следующих страниц.
+    private const int RepliesPreviewSize = 5;
+
     private readonly ICommentRepository _commentRepository;
 
     public GetCommentsByTopicCommandHandler(ICommentRepository commentRepository)
@@ -23,65 +27,47 @@ internal sealed class GetCommentsByTopicCommandHandler
         GetCommentsByTopicCommand command,
         CancellationToken cancellationToken)
     {
-        var (rootComments, childComments) = await _commentRepository.GetPagedCommentTreeAsync(
+        var page = await _commentRepository.GetCommentTreePageAsync(
             command.TopicId,
             command.Page,
             command.PageSize,
+            RepliesPreviewSize,
             cancellationToken);
 
-        var allCommentsList = new List<Comment>(rootComments);
-        allCommentsList.AddRange(childComments);
+        var repliesByParentId = page.PreviewReplies
+            .GroupBy(r => r.ParentCommentId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Create DTOs
-        var dtoMap = new Dictionary<long, CommentTreeDto>();
-        foreach (var comment in allCommentsList)
-        {
-            dtoMap[comment.Id] = new CommentTreeDto(
-                comment.Id,
-                comment.TopicId,
-                comment.ParentCommentId,
-                comment.AuthorId,
-                comment.ContentDisplay,
-                comment.CreatedAt.ToString("o"),
-                comment.UpdatedAt.ToString("o"),
-                new List<CommentTreeDto>());
-        }
+        var comments = page.RootComments
+            .Select(root => MapToDto(
+                root,
+                repliesByParentId.TryGetValue(root.Id, out var replies)
+                    ? replies
+                    : Array.Empty<Comment>(),
+                page.ReplyCounts))
+            .ToList();
 
-        // Link comments to their parents
-        var resultRoots = new List<CommentTreeDto>();
-        foreach (var comment in allCommentsList)
-        {
-            var dto = dtoMap[comment.Id];
-            if (comment.ParentCommentId == null)
-            {
-                resultRoots.Add(dto);
-            }
-            else if (dtoMap.TryGetValue(comment.ParentCommentId.Value, out var parent))
-            {
-                ((List<CommentTreeDto>)parent.Replies).Add(dto);
-            }
-        }
-
-        // Sort replies chronologically (newest first) within each branch
-        foreach (var root in resultRoots)
-        {
-            SortRepliesChronologically(root);
-        }
-
-        return new GetCommentsByTopicResult(resultRoots, rootComments.Count);
+        return new GetCommentsByTopicResult(comments, page.TotalRootCount);
     }
 
-    private void SortRepliesChronologically(CommentTreeDto comment)
+    private static CommentTreeDto MapToDto(
+        Comment comment,
+        IReadOnlyCollection<Comment> replies,
+        IReadOnlyDictionary<long, int> replyCounts)
     {
-        var repliesList = (List<CommentTreeDto>)comment.Replies;
-        repliesList.Sort((a, b) =>
-        {
-            var cmp = string.CompareOrdinal(a.CreatedAt, b.CreatedAt);
-            return cmp != 0 ? cmp : a.Id.CompareTo(b.Id);
-        });
-        foreach (var reply in repliesList)
-        {
-            SortRepliesChronologically(reply);
-        }
+        var replyDtos = replies
+            .Select(reply => MapToDto(reply, Array.Empty<Comment>(), replyCounts))
+            .ToList();
+
+        return new CommentTreeDto(
+            comment.Id,
+            comment.TopicId,
+            comment.ParentCommentId,
+            comment.AuthorId,
+            comment.ContentDisplay,
+            comment.CreatedAt.ToString("o"),
+            comment.UpdatedAt.ToString("o"),
+            replyDtos,
+            replyCounts.GetValueOrDefault(comment.Id));
     }
 }

@@ -1,6 +1,6 @@
 @page "/topics/{TopicId:long}"
 @rendermode InteractiveServer
-@using System.Linq
+@implements IDisposable
 @using OtusForum.UI.Clients.Comments
 @using OtusForum.UI.Clients.Topics
 @using Microsoft.AspNetCore.Components.Web
@@ -90,30 +90,17 @@ else
 
         @if (_topicWithComments?.Comments is { Count: > 0 })
         {
-            @* Комментарии уже приходят древовидными с вложенными Replies *@
+            @* Корневые комментарии приходят с первой страницей ответов, остальные подгружаются по кнопке *@
             @foreach (var comment in _topicWithComments.Comments)
             {
-                <CommentItem Comment="comment" TopicId="TopicId" />
+                <CommentItem @key="comment.Id" Comment="comment" TopicId="TopicId" />
             }
 
             @* Пагинация *@
-            <nav aria-label="Навигация по комментариям" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
-                        <button class="page-link" @onclick="(() => ChangePage(_currentPage - 1))" disabled="@(_currentPage <= 1)">
-                            <i class="bi bi-chevron-left me-1"></i>Назад
-                        </button>
-                    </li>
-                    <li class="page-item disabled">
-                        <span class="page-link">Страница @_currentPage</span>
-                    </li>
-                    <li class="page-item @(_hasNextPage ? "" : "disabled")">
-                        <button class="page-link" @onclick="(() => ChangePage(_currentPage + 1))" disabled="@(!_hasNextPage)">
-                            Далее<i class="bi bi-chevron-right ms-1"></i>
-                        </button>
-                    </li>
-                </ul>
-            </nav>
+            <Pagination CurrentPage="_currentPage"
+                        TotalCount="_totalCount"
+                        PageSize="PageSize"
+                        OnPageChanged="ChangePage" />
         }
 
         @if (AuthService.IsAuthenticated)
@@ -258,7 +245,7 @@ else
     private bool _isLoading = true;
     private int _currentPage = 1;
     private const int PageSize = 20;
-    private bool _hasNextPage = false;
+    private int _totalCount = 0;
     private string _commentContent = string.Empty;
     private bool _isSubmitting = false;
     private string? _submitMessage;
@@ -278,7 +265,7 @@ else
         CommentRefreshService.OnCommentChanged += OnCommentChanged;
     }
 
-    protected void Dispose()
+    public void Dispose()
     {
         CommentRefreshService.OnCommentChanged -= OnCommentChanged;
     }
@@ -323,9 +310,15 @@ else
                 AuthService.IsAdmin,
                 AuthService.IsModerator);
 
-            // Определяем, есть ли следующая страница
-            // total_count не приходит в ответе, поэтому проверяем по количеству комментариев на странице
-            _hasNextPage = _topicWithComments?.Comments?.Count >= PageSize;
+            _totalCount = _topicWithComments?.TotalCount ?? 0;
+
+            // Последняя страница опустела после удаления комментариев — возвращаемся на предыдущую
+            if (_currentPage > 1 && _topicWithComments?.Comments is not { Count: > 0 })
+            {
+                _currentPage--;
+                await LoadTopicWithCommentsAsync();
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -340,7 +333,7 @@ else
 
     private async Task ReloadCommentsAsync()
     {
-        _currentPage = 1;
+        // Страница не сбрасывается, чтобы не терять контекст при изменении вложенных ответов
         await LoadTopicWithCommentsAsync();
         await InvokeAsync(StateHasChanged);
     }
@@ -386,6 +379,8 @@ else
             _submitMessage = "Комментарий успешно добавлен!";
             _submitMessageType = "alert-success";
 
+            // Новый корневой комментарий добавляется в конец списка, показываем первую страницу
+            _currentPage = 1;
             await LoadTopicWithCommentsAsync();
         }
         catch (Exception ex)

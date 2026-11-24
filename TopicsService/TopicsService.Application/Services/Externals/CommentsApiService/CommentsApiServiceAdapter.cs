@@ -23,7 +23,7 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
         _logger = logger;
     }
 
-    public async Task<IReadOnlyCollection<CommentDto>> GetCommentsByTopicIdAsync(
+    public async Task<PagedCommentsDto> GetCommentsByTopicIdAsync(
         long topicId,
         int page,
         int pageSize,
@@ -42,15 +42,44 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
                 request,
                 cancellationToken: cancellationToken);
 
-            return response.Comments
-                .Select(MapToCommentDto)
-                .ToList()
-                .AsReadOnly();
+            return new PagedCommentsDto(
+                response.Comments.Select(MapToCommentDto).ToList().AsReadOnly(),
+                response.TotalCount);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Ошибка при получении комментариев для темы {TopicId}", topicId);
-            return new List<CommentDto>().AsReadOnly();
+            return new PagedCommentsDto([], 0);
+        }
+    }
+
+    public async Task<PagedCommentsDto> GetRepliesAsync(
+        long parentCommentId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var request = new GetRepliesRequest
+            {
+                ParentCommentId = parentCommentId,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            var response = await _client.GetRepliesAsync(
+                request,
+                cancellationToken: cancellationToken);
+
+            return new PagedCommentsDto(
+                response.Comments.Select(MapToCommentDto).ToList().AsReadOnly(),
+                response.TotalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении ответов для комментария {ParentCommentId}", parentCommentId);
+            return new PagedCommentsDto([], 0);
         }
     }
 
@@ -93,6 +122,7 @@ internal sealed class CommentsApiServiceAdapter : ICommentsApiServiceAdapter
             proto.Content,
             proto.CreatedAt,
             proto.UpdatedAt,
-            replies as IReadOnlyCollection<CommentDto>);
+            replies,
+            proto.RepliesTotalCount);
     }
 }

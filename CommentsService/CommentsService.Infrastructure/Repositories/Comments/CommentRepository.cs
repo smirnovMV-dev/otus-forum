@@ -122,61 +122,110 @@ internal sealed class CommentRepository : ICommentRepository
         }
     }
 
-    public async Task<(IReadOnlyCollection<Comment> RootComments, IReadOnlyCollection<Comment> ChildComments)> GetPagedCommentTreeAsync(
+    public async Task<CommentTreePage> GetCommentTreePageAsync(
         long topicId,
+        int page,
+        int pageSize,
+        int repliesPreviewSize,
+        CancellationToken cancellationToken)
+    {
+        if (pageSize <= 0 || repliesPreviewSize <= 0)
+        {
+            return new CommentTreePage([], [], new Dictionary<long, int>(), 0);
+        }
+
+        try
+        {
+            // 1. Страница корневых комментариев (сначала старые)
+            var totalRootCount = await _context.Comments
+                .CountAsync(c => c.TopicId == topicId && c.ParentCommentId == null, cancellationToken);
+
+            var rootComments = await _context.Comments
+                .Where(c => c.TopicId == topicId && c.ParentCommentId == null)
+                .OrderBy(c => c.CreatedAt)
+                .ThenBy(c => c.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            if (rootComments.Count == 0)
+            {
+                return new CommentTreePage([], [], new Dictionary<long, int>(), totalRootCount);
+            }
+
+            var rootIds = rootComments.Select(rc => rc.Id).ToArray();
+
+            // 2. Первые ответы корней (сначала новые) для предварительного просмотра
+            var previewReplies = await _context.Comments
+                .FromSqlRaw(@"
+                    SELECT id, topic_id, parent_comment_id, author_id, content, created_at, updated_at,
+                           updated_by_user_id, is_deleted, deleted_at
+                    FROM (
+                        SELECT c.id, c.topic_id, c.parent_comment_id, c.author_id, c.content, c.created_at, c.updated_at,
+                               c.updated_by_user_id, c.is_deleted, c.deleted_at,
+                               ROW_NUMBER() OVER (PARTITION BY c.parent_comment_id ORDER BY c.created_at DESC, c.id DESC) AS rn
+                        FROM public.comments c
+                        WHERE c.parent_comment_id = ANY({0}) AND c.topic_id = {1}
+                    ) ranked
+                    WHERE ranked.rn <= {2}
+                    ORDER BY ranked.parent_comment_id, ranked.created_at DESC, ranked.id DESC", rootIds, topicId, repliesPreviewSize)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            // 3. Количество ответов для корней и отданных ответов
+            var parentIds = rootIds
+                .Concat(previewReplies.Select(r => r.Id))
+                .ToList();
+
+            var replyCounts = await CountRepliesAsync(parentIds, cancellationToken);
+
+            return new CommentTreePage(
+                rootComments.AsReadOnly(),
+                previewReplies.AsReadOnly(),
+                replyCounts,
+                totalRootCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при получении древовидных комментариев для топика {TopicId}", topicId);
+            return new CommentTreePage([], [], new Dictionary<long, int>(), 0);
+        }
+    }
+
+    public async Task<PagedRepliesResult> GetPagedRepliesAsync(
+        long parentCommentId,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
         if (pageSize <= 0)
         {
-            return ([], []);
+            return new PagedRepliesResult([], new Dictionary<long, int>(), 0);
         }
 
         try
         {
-            // 1. Paginate root comments (oldest first)
-            var rootComments = await _context.Comments
-                .Where(c => c.TopicId == topicId && c.ParentCommentId == null)
-                .OrderBy(c => c.CreatedAt)
+            var totalCount = await _context.Comments
+                .CountAsync(c => c.ParentCommentId == parentCommentId, cancellationToken);
+
+            var replies = await _context.Comments
+                .Where(c => c.ParentCommentId == parentCommentId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ThenByDescending(c => c.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
-            if (!rootComments.Any())
-            {
-                return ([], []);
-            }
+            var replyCounts = await CountRepliesAsync(
+                replies.Select(r => r.Id).ToList(),
+                cancellationToken);
 
-            var rootIds = rootComments.Select(rc => rc.Id).ToList();
-
-            // 2. Recursive CTE to fetch all descendants
-            var childComments = await _context.Comments
-                .FromSqlRaw(@"
-                    WITH RECURSIVE CommentTree AS (
-                        SELECT id, topic_id, parent_comment_id, author_id, content, created_at, updated_at,
-                               updated_by_user_id, is_deleted, deleted_at
-                        FROM public.comments
-                        WHERE parent_comment_id = ANY({0}) AND topic_id = {1}
-
-                        UNION ALL
-
-                        SELECT c.id, c.topic_id, c.parent_comment_id, c.author_id, c.content, c.created_at, c.updated_at,
-                               c.updated_by_user_id, c.is_deleted, c.deleted_at
-                        FROM public.comments c
-                        INNER JOIN CommentTree ct ON c.parent_comment_id = ct.id
-                        WHERE c.topic_id = {1}
-                    )
-                    SELECT * FROM CommentTree", rootIds.ToArray(), topicId)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
-
-            return (rootComments.AsReadOnly(), childComments.AsReadOnly());
+            return new PagedRepliesResult(replies.AsReadOnly(), replyCounts, totalCount);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ошибка при получении древовидных комментариев для топика {TopicId}", topicId);
-            return ([], []);
+            _logger.LogError(ex, "Ошибка при получении ответов для комментария {ParentCommentId}", parentCommentId);
+            return new PagedRepliesResult([], new Dictionary<long, int>(), 0);
         }
     }
 
@@ -212,5 +261,23 @@ internal sealed class CommentRepository : ICommentRepository
         }
 
         return result;
+    }
+
+    private async Task<IReadOnlyDictionary<long, int>> CountRepliesAsync(
+        IReadOnlyCollection<long> parentIds,
+        CancellationToken cancellationToken)
+    {
+        if (parentIds.Count == 0)
+        {
+            return new Dictionary<long, int>();
+        }
+
+        var ids = parentIds.ToArray();
+
+        return await _context.Comments
+            .Where(c => c.ParentCommentId != null && ids.Contains(c.ParentCommentId.Value))
+            .GroupBy(c => c.ParentCommentId!.Value)
+            .Select(g => new { ParentCommentId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ParentCommentId, x => x.Count, cancellationToken);
     }
 }
