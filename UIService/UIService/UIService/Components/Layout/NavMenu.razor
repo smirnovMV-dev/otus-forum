@@ -34,9 +34,9 @@
                                 <hr class="dropdown-divider">
                             </li>
                             <li>
-                                <a class="dropdown-item text-danger" href="#" @onclick="Logout" @onclick:preventDefault>
+                                <button type="button" class="dropdown-item text-danger" @onclick="Logout">
                                     <i class="bi bi-box-arrow-up me-2"></i>Выйти
-                                </a>
+                                </button>
                             </li>
                         </ul>
                     </div>
@@ -75,7 +75,6 @@
                         <span class="bi bi-shield-lock" aria-hidden="true"></span>Админка
                     </NavLink>
                 </div>
-                }
             }
         }
     </nav>
@@ -115,7 +114,14 @@
 
     private async Task Logout()
     {
-        await AuthService.LogoutAsync();
-        Navigation.NavigateTo("/");
+        try
+        {
+            await AuthService.LogoutAsync();
+        }
+        finally
+        {
+            // Полная перезагрузка сбрасывает состояние авторизации во всех интерактивных компонентах.
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
     }
 }

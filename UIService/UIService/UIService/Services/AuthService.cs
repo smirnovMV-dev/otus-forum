@@ -13,6 +13,8 @@ public sealed class AuthService
     private const string MeUri = "User/Me";
     private const string RefreshClientName = "AuthRefreshClient";
 
+    private static readonly TimeSpan RevokeTimeout = TimeSpan.FromSeconds(5);
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IHttpClientFactory _httpClientFactory;
@@ -136,32 +138,36 @@ public sealed class AuthService
     {
         var refreshToken = _refreshToken;
 
+        // Локальное состояние очищаем первым, чтобы выход срабатывал и при недоступном сервере.
+        await ClearAsync();
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return;
+        }
+
         try
         {
-            if (!string.IsNullOrWhiteSpace(refreshToken))
-            {
-                using var client = _httpClientFactory.CreateClient(RefreshClientName);
-                using var response = await client.PostAsJsonAsync(
-                    RevokeUri,
-                    new RefreshRequestBody { RefreshToken = refreshToken },
-                    JsonOptions,
-                    cancellationToken);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(RevokeTimeout);
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogWarning(
-                        "Не удалось отозвать refresh-токен: {StatusCode}.",
-                        response.StatusCode);
-                }
+            using var client = _httpClientFactory.CreateClient(RefreshClientName);
+            using var response = await client.PostAsJsonAsync(
+                RevokeUri,
+                new RefreshRequestBody { RefreshToken = refreshToken },
+                JsonOptions,
+                timeout.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Не удалось отозвать refresh-токен: {StatusCode}.",
+                    response.StatusCode);
             }
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or NotSupportedException)
+        catch (Exception ex)
         {
             _logger.LogWarning(ex, "Ошибка при отзыве refresh-токена.");
-        }
-        finally
-        {
-            await ClearAsync();
         }
     }
 
