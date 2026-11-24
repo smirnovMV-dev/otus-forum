@@ -69,7 +69,7 @@ internal sealed class GetTopicWithCommentsCommandHandler
             : "Неизвестный пользователь";
 
         var canEdit = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
-        var canDelete = command.UserId == topic.AuthorId || command.IsAdmin || command.IsModerator;
+        var canDelete = command.UserId == topic.AuthorId || command.IsAdmin;
 
         return new GetTopicWithCommentsResult(
             topic.Id,
@@ -88,7 +88,7 @@ internal sealed class GetTopicWithCommentsCommandHandler
         GetTopicWithCommentsCommand command)
     {
         var commentCanEdit = command.UserId == dto.AuthorId || command.IsAdmin || command.IsModerator;
-        var commentCanDelete = command.UserId == dto.AuthorId || command.IsAdmin || command.IsModerator;
+        var commentCanDelete = command.UserId == dto.AuthorId || command.IsAdmin;
 
         return new CommentResult(
             dto.Id,

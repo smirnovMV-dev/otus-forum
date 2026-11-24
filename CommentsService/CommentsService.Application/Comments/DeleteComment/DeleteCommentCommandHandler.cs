@@ -35,7 +35,6 @@ internal sealed class DeleteCommentCommandHandler : IRequestHandler<DeleteCommen
         }
 
         var canDelete = command.IsAdmin
-            || command.IsModerator
             || comment.AuthorId == command.UserId;
 
         if (!canDelete)

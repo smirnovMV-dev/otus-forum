@@ -26,8 +26,7 @@ internal sealed class DeleteTopicCommandHandler : IRequestHandler<DeleteTopicCom
         }
 
         var canDelete = topic.AuthorId == command.AuthorId
-            || command.isAdmin
-            || command.isModerator;
+            || command.isAdmin;
 
         if (!canDelete)
         {
