@@ -1,4 +1,5 @@
 @using UIService.Services
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -21,10 +22,10 @@
                     </div>
                     <div class="dropdown">
                         <button class="profile-btn dropdown-toggle" type="button" id="userDropdown"
-                                data-bs-toggle="dropdown" aria-expanded="false">
+                                aria-expanded="false" @onclick="ToggleDropdown">
                             ⋮
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userDropdownMenu">
                             <li>
                                 <a class="dropdown-item" href="/profile">
                                     <i class="bi bi-person me-2"></i>Профиль
@@ -112,6 +113,11 @@
         Dispose();
     }
 
+    private async Task ToggleDropdown()
+    {
+        await JSRuntime.InvokeVoidAsync("dropdownHelper.toggle", "userDropdown");
+    }
+
     private async Task Logout()
     {
         try
@@ -120,6 +126,8 @@
         }
         finally
         {
+            // Закрываем dropdown перед перезагрузкой
+            await JSRuntime.InvokeVoidAsync("dropdownHelper.close", "userDropdown");
             // Полная перезагрузка сбрасывает состояние авторизации во всех интерактивных компонентах.
             Navigation.NavigateTo("/", forceLoad: true);
         }

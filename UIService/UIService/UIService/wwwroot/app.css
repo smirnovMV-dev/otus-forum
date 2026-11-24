@@ -102,3 +102,9 @@ h1:focus {
     font-weight: 500;
     color: #fff;
 }
+
+/* Dropdown-меню должно быть поверх контента */
+.nav-scrollable .user-info .dropdown {
+    position: relative;
+    z-index: 1050;
+}
